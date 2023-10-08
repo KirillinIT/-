@@ -122,20 +122,9 @@ def search_blogger(message):
           .format(blogger_name),
           reply_markup=markup)
   
-    #   if message.text.lower() == "вернуться в главное меню":
-    #     return_to_main_menu(message)
-    #   else:
     bot.register_next_step_handler(
         message,
         partial(filter_data_by_social_network, filtered_df=filtered_df))
-  
-    # else:
-    #   # Если не найден, отправляем сообщение "не нашли"
-    #   bot.send_message(message.chat.id,
-    #                    "Блогера с именем '{}' не найдено.".format(blogger_name))
-  
-      # # Возвращаем пользователя в главное меню
-      # return_to_main_menu(message)
   
 
 # Функция для фильтрации данных по социальной сети
@@ -218,28 +207,6 @@ def try_other_social_networks(message):
 
 
 # Обработчик команды /return
-# @bot.message_handler(
-#     func=lambda message: message.text.lower() == "Вернуться в главное меню")
-# @bot.message_handler(commands=["return"])
-# def return_to_main_menu(message):
-#   markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
-#                                      one_time_keyboard=True)
-#   item1 = types.KeyboardButton("Найти блогера по имени")
-#   item2 = types.KeyboardButton("Найти блогера по ссылке")
-#   item3 = types.KeyboardButton("Найти блогера по тематике")
-#   item4 = types.KeyboardButton("Поиск блогеров по определённым соц. сетям")
-#   item5 = types.KeyboardButton("Добавить блогера в бота")
-#   markup.add(item1)
-#   markup.add(item2)
-#   markup.add(item3)
-#   markup.add(item4)
-#   markup.add(item5)
-
-#   bot.send_message(message.chat.id,
-#                    "Продолжите пользоваться нашим ботом с помощью кнопок ниже",
-#                    reply_markup=markup)
-
-
 @bot.message_handler(
     func=lambda message: message.text.lower() == "вернуться в главное меню")
 @bot.message_handler(commands=["return"])
@@ -263,11 +230,6 @@ def return_to_main_menu(message):
                    reply_markup=markup)
 
 
-# @bot.message_handler(
-#     func=lambda message: message.text.lower() == "вернуться в главное меню")
-# def return_to_main_menu(message):
-#   bot.send_message(message.chat.id,
-#                    "Введите команду /return, чтобы вернуться в главное меню.")
 
 keep_alive()  #запускаем flask-сервер в отдельном потоке. Подробнее ниже...
 bot.polling(non_stop=True, interval=0)  #запуск бота
