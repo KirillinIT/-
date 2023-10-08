@@ -36,7 +36,7 @@ def start(message):
   bot.send_photo(
       message.chat.id,
       img,
-      "Добрый день, {0.first_name}! \n\nЯ - бот для поиска блогеров. На данный момент я в режиме Бета-тестирования. Ожидаемое время запуска - 30.10.2023. Выберите один из вариантов поиска:"
+      "Добрый день, {0.first_name}! \n\nЯ - бот для поиска блогеров.\n\nНа данный момент я в режиме Бета-тестирования. Ожидаемое время запуска - 30.10.2023. \n\nВыберите один из вариантов поиска:"
       .format(message.from_user),
       reply_markup=markup)
 
@@ -124,7 +124,7 @@ def search_blogger(message):
           "Блогер с именем '{}' найден. Выберите социальные сети, которые вас интересуют:"
           .format(blogger_name),
           reply_markup=markup)
-  
+
     bot.register_next_step_handler(
         message,
         partial(filter_data_by_social_network, filtered_df=filtered_df))
@@ -136,6 +136,7 @@ def filter_data_by_social_network(message, filtered_df):
 
   # Фильтруем данные по выбранной социальной сети
   mask = filtered_df.columns.str.contains(social_network, case=False)
+
   filtered_df_socnet = filtered_df.loc[:, mask]
 
   filtered_df_socnet = filtered_df_socnet.rename(
@@ -144,25 +145,25 @@ def filter_data_by_social_network(message, filtered_df):
   filtered_df_socnet = filtered_df_socnet.apply(
       lambda x: x.map(lambda x: np.nan if x is None else x))
 
-  # Добавьте кнопки
-
+  # Добавляем кнопки
   keyboard_data_social_network = types.ReplyKeyboardMarkup(
       one_time_keyboard=True)
-  item1 = types.KeyboardButton('Вернуться в главное меню')
-  item2 = types.KeyboardButton('Найти другие соц.сети блогера')
+  item1 = types.KeyboardButton('Найти другие соц.сети блогера')
+  item2 = types.KeyboardButton('Вернуться в главное меню')
   keyboard_data_social_network.add(item1)
   keyboard_data_social_network.add(item2)
 
   for index, row in filtered_df_socnet.iterrows():
     # Проверяем, что текущая строка не пуста
     if not row.isnull().all():
-      # Инициализируем сообщение для вывода результатов
+      #Инициализируем сообщение для вывода результатов
       result_message = "🖤 Результаты поиска для социальной сети {}:\n\n".format(
           social_network)
+      # result_message = "🖤 Результаты поиска для социальной сети :\n\n"
 
       # Добавляем информацию о блогере в начале каждой строки
       result_message += "<b>Имя блогера</b>: {}\n".format(
-          row['блогер'].title())
+          row['блогер'])
 
       # Перебираем столбцы и их значения в текущей строке
       for column, value in row.items():
@@ -174,17 +175,31 @@ def filter_data_by_social_network(message, filtered_df):
                                                      value)
 
       # Добавляем статистику в конец строки
-      result_message += "<b>Статистика:</b> {}\n\n".format(row['статистика'])
-
+      result_message += "<b>Статистика:</b> {}\n".format(row['статистика'])
       # Отправляем результат пользователю
       max_message_length = 4000  # Максимальная длина сообщения в Telegram
       result_message += "\n\n"
-      for i in range(0, len(result_message), max_message_length):
-        bot.send_message(message.chat.id,
-                         result_message[i:i + max_message_length],
-                         parse_mode='HTML',
-                         reply_markup=keyboard_data_social_network)
+      # for i in range(0, len(result_message), max_message_length):
+      #   bot.send_message(message.chat.id,
+      #                    result_message[i:i + max_message_length],
+      #                    parse_mode='HTML',
+      #                    reply_markup=keyboard_data_social_network)
+# Вне цикла добавляем значения столбцов "налог" и "контакты менеджера" к сообщению
+  # Получаем значение столбца 'налог' из DataFrame с проверкой на наличие столбца
+  tax_value = filtered_df.get('налог')
+  # Если серия не равна None и не пустая, то берем первый элемент (значение)
+  if tax_value is not None and not tax_value.empty:
+      tax_value = tax_value.values[0]
+      result_message += "<b>✂️💵 Налог</b>: {}\n".format(tax_value)
+    
+  manager_contacts = filtered_df.get('контакты менеджера')
+  # Если серия не равна None и не пустая, то берем первый элемент (значение)
+  if manager_contacts is not None and not manager_contacts.empty:
+      manager_contacts = manager_contacts.values[1]
+      result_message += "<b>☎ Контакты менеджера</b>: {}\n".format(manager_contacts)
+  
 
+  bot.send_message(message.chat.id, result_message, parse_mode='HTML', reply_markup=keyboard_data_social_network)
   bot.register_next_step_handler(message, fork_of_functions)
 
 
@@ -231,7 +246,6 @@ def return_to_main_menu(message):
   bot.send_message(message.chat.id,
                    "Продолжите пользоваться нашим ботом с помощью кнопок ниже",
                    reply_markup=markup)
-
 
 
 keep_alive()  #запускаем flask-сервер в отдельном потоке. Подробнее ниже...
