@@ -65,7 +65,7 @@ current_blogger_name = None
 #Функция для поиска блогера в DataFrame
 def search_blogger(message):
   global current_blogger_name  # Используем глобальную переменную
-  
+
   if message.text.lower() == "вернуться в главное меню":
     return_to_main_menu(message)
 
@@ -73,40 +73,40 @@ def search_blogger(message):
     # Получаем введенное имя блогера от пользователя
     blogger_name = message.text.lower()
     current_blogger_name = message
-  
+
     # Ищем блогера в DataFrame
     filtered_df = df[df['блогер'].str.contains(blogger_name)]
-  
+
     if not filtered_df.empty:
       # Задаем вопрос о социальных сетях и создаем клавиатуру
       markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
       item1 = types.KeyboardButton("Telegram")
       item2 = types.KeyboardButton("Instagram")
-  
+
       item3 = types.KeyboardButton("Группы в VK")
       item4 = types.KeyboardButton("Личные страницы в VK")
       item5 = types.KeyboardButton("VK Видео")
-  
+
       item6 = types.KeyboardButton("YouTube")
       item7 = types.KeyboardButton("RuTube")
-  
+
       item8 = types.KeyboardButton("Дзен")
       item9 = types.KeyboardButton("Дзен Шоу")
-  
+
       item10 = types.KeyboardButton("Одноклассники")
       item11 = types.KeyboardButton("OK Шоу")
-  
+
       item12 = types.KeyboardButton("Twitch")
-  
+
       item13 = types.KeyboardButton("TikTok")
-  
+
       item14 = types.KeyboardButton("Threads")
       item15 = types.KeyboardButton("Likee")
       item16 = types.KeyboardButton("Yappy")
-  
+
       item17 = types.KeyboardButton("Подкасты")
       item18 = types.KeyboardButton("Вернуться в главное меню")
-  
+
       markup.add(item1, item2)
       markup.add(item3, item4, item5)
       markup.add(item6)
@@ -118,7 +118,7 @@ def search_blogger(message):
       markup.add(item14, item15, item16)
       markup.add(item17)
       markup.add(item18)
-  
+
       bot.send_message(
           message.chat.id,
           "Блогер с именем '{}' найден. Выберите социальные сети, которые вас интересуют:"
@@ -126,9 +126,9 @@ def search_blogger(message):
           reply_markup=markup)
 
     bot.register_next_step_handler(
-        message,
-        partial(filter_data_by_social_network, filtered_df=filtered_df))
-  
+        message, partial(filter_data_by_social_network,
+                         filtered_df=filtered_df))
+
 
 # Функция для фильтрации данных по социальной сети
 def filter_data_by_social_network(message, filtered_df):
@@ -145,6 +145,8 @@ def filter_data_by_social_network(message, filtered_df):
   filtered_df_socnet = filtered_df_socnet.apply(
       lambda x: x.map(lambda x: np.nan if x is None else x))
 
+
+  
   # Добавляем кнопки
   keyboard_data_social_network = types.ReplyKeyboardMarkup(
       one_time_keyboard=True)
@@ -152,6 +154,8 @@ def filter_data_by_social_network(message, filtered_df):
   item2 = types.KeyboardButton('Вернуться в главное меню')
   keyboard_data_social_network.add(item1)
   keyboard_data_social_network.add(item2)
+
+  result_message = ""  # Инициализируем result_message
 
   for index, row in filtered_df_socnet.iterrows():
     # Проверяем, что текущая строка не пуста
@@ -162,8 +166,7 @@ def filter_data_by_social_network(message, filtered_df):
       # result_message = "🖤 Результаты поиска для социальной сети :\n\n"
 
       # Добавляем информацию о блогере в начале каждой строки
-      result_message += "<b>Имя блогера</b>: {}\n".format(
-          row['блогер'])
+      result_message += "<b>Имя блогера</b>: {}\n".format(row['блогер'].title())
 
       # Перебираем столбцы и их значения в текущей строке
       for column, value in row.items():
@@ -176,16 +179,28 @@ def filter_data_by_social_network(message, filtered_df):
 
       # Добавляем статистику в конец строки
       result_message += "<b>Статистика:</b> {}\n".format(row['статистика'])
-      # Отправляем результат пользователю
+      # # Отправляем результат пользователю
+      # result_message += "<b>\n\n✂️💵 Налог</b>: {}\n".format(row['налог'])
+      # result_message += "<b>☎ Контакты менеджера</b>: {}\n".format(row['контакты менеджера'])
+      
       max_message_length = 4000  # Максимальная длина сообщения в Telegram
       result_message += "\n\n"
-      # for i in range(0, len(result_message), max_message_length):
-      #   bot.send_message(message.chat.id,
-      #                    result_message[i:i + max_message_length],
-      #                    parse_mode='HTML',
-      #                    reply_markup=keyboard_data_social_network)
-# Вне цикла добавляем значения столбцов "налог" и "контакты менеджера" к сообщению
-  # Получаем значение столбца 'налог' из DataFrame с проверкой на наличие столбца
+      for i in range(0, len(result_message), max_message_length):
+        bot.send_message(message.chat.id,
+                         result_message[i:i + max_message_length],
+                         parse_mode='HTML',
+                         reply_markup=keyboard_data_social_network)
+
+    # Маска для выбранной социальной сети  
+  # Маска для столбцов, содержащих "налог" (без учета регистра)
+  # tax_mask = filtered_df.columns.str.contains('налог', case=False)
+  # # Маска для столбцов, содержащих "контакты менеджера" (без учета регистра)
+  # contacts_mask = filtered_df.columns.str.contains('контакты менеджера', case=False)
+  # # Объединяем маски с использованием логического оператора "или" (|)
+  # combined_mask = tax_mask & contacts_mask
+  # filtered_df_nalog_kontact = filtered_df.loc[:, combined_mask]
+  
+  result_message = ""
   tax_value = filtered_df.get('налог')
   # Если серия не равна None и не пустая, то берем первый элемент (значение)
   if tax_value is not None and not tax_value.empty:
@@ -195,13 +210,15 @@ def filter_data_by_social_network(message, filtered_df):
   manager_contacts = filtered_df.get('контакты менеджера')
   # Если серия не равна None и не пустая, то берем первый элемент (значение)
   if manager_contacts is not None and not manager_contacts.empty:
-      manager_contacts = manager_contacts.values[1]
+      if len(manager_contacts.values) > 1:
+        manager_contacts = manager_contacts.values[1]
+      else:
+        manager_contacts = manager_contacts.values[0]
       result_message += "<b>☎ Контакты менеджера</b>: {}\n".format(manager_contacts)
-  
-
-  bot.send_message(message.chat.id, result_message, parse_mode='HTML', reply_markup=keyboard_data_social_network)
-  bot.register_next_step_handler(message, fork_of_functions)
-
+    
+  bot.send_message(message.chat.id,
+                   result_message,
+                   parse_mode='HTML',)
 
 def fork_of_functions(message):
   if message.text.lower() == "вернуться в главное меню":
