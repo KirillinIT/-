@@ -21,13 +21,17 @@ def start(message):
   item1 = types.KeyboardButton("Найти блогера по имени")
   item2 = types.KeyboardButton("Найти блогера по ссылке")
   item3 = types.KeyboardButton("Найти блогера по тематике")
-  item4 = types.KeyboardButton("Поиск блогеров по определённым соц. сетям")
-  item5 = types.KeyboardButton("Добавить блогера в бота")
+  item4 = types.KeyboardButton("Найти блогеров по определённым соц. сетям")
+  item5 = types.KeyboardButton("Поиск по определённому виду рекламы")
+  item6 = types.KeyboardButton("Поиск по бюджету")
+  item7 = types.KeyboardButton("Добавить блогера в бота")
   markup.add(item1)
   markup.add(item2)
   markup.add(item3)
   markup.add(item4)
   markup.add(item5)
+  markup.add(item6)
+  markup.add(item7)
   img = open('blog-articles.png', 'rb')  # Подтягиваем фотку для приветствия
   bot.send_photo(
       message.chat.id,
