@@ -4,14 +4,13 @@ from telebot import types
 from string import Template
 from background import keep_alive  #импорт функции для поддержки работоспособности
 
+#basic
+import pandas as pd
 from functools import partial
 
-import pandas as pd
-
+#data
 df = pd.read_csv('bufer.csv')
-
 token = 'TOKEN'  # Токен бота  # Замените на свой токен
-
 bot = telebot.TeleBot(token)
 
 
