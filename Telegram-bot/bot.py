@@ -261,5 +261,5 @@ def return_to_main_menu(message):
                    reply_markup=markup)
 
 
-keep_alive()  #запускаем flask-сервер в отдельном потоке. Подробнее ниже...
+keep_alive()  #запускаем flask-сервер в отдельном потоке.
 bot.polling(non_stop=True, interval=0)  #запуск бота
