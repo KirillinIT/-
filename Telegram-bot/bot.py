@@ -145,8 +145,6 @@ def filter_data_by_social_network(message, filtered_df):
   filtered_df_socnet = filtered_df_socnet.apply(
       lambda x: x.map(lambda x: np.nan if x is None else x))
 
-
-  
   # Добавляем кнопки
   keyboard_data_social_network = types.ReplyKeyboardMarkup(
       one_time_keyboard=True)
@@ -166,7 +164,8 @@ def filter_data_by_social_network(message, filtered_df):
       # result_message = "🖤 Результаты поиска для социальной сети :\n\n"
 
       # Добавляем информацию о блогере в начале каждой строки
-      result_message += "<b>Имя блогера</b>: {}\n".format(row['блогер'].title())
+      result_message += "<b>Имя блогера</b>: {}\n".format(
+          row['блогер'].title())
 
       # Перебираем столбцы и их значения в текущей строке
       for column, value in row.items():
@@ -182,7 +181,7 @@ def filter_data_by_social_network(message, filtered_df):
       # # Отправляем результат пользователю
       # result_message += "<b>\n\n✂️💵 Налог</b>: {}\n".format(row['налог'])
       # result_message += "<b>☎ Контакты менеджера</b>: {}\n".format(row['контакты менеджера'])
-      
+
       max_message_length = 4000  # Максимальная длина сообщения в Telegram
       result_message += "\n\n"
       for i in range(0, len(result_message), max_message_length):
@@ -191,34 +190,31 @@ def filter_data_by_social_network(message, filtered_df):
                          parse_mode='HTML',
                          reply_markup=keyboard_data_social_network)
 
-    # Маска для выбранной социальной сети  
-  # Маска для столбцов, содержащих "налог" (без учета регистра)
-  # tax_mask = filtered_df.columns.str.contains('налог', case=False)
-  # # Маска для столбцов, содержащих "контакты менеджера" (без учета регистра)
-  # contacts_mask = filtered_df.columns.str.contains('контакты менеджера', case=False)
-  # # Объединяем маски с использованием логического оператора "или" (|)
-  # combined_mask = tax_mask & contacts_mask
-  # filtered_df_nalog_kontact = filtered_df.loc[:, combined_mask]
-  
   result_message = ""
   tax_value = filtered_df.get('налог')
   # Если серия не равна None и не пустая, то берем первый элемент (значение)
   if tax_value is not None and not tax_value.empty:
-      tax_value = tax_value.values[0]
-      result_message += "<b>✂️💵 Налог</b>: {}\n".format(tax_value)
-    
+    tax_value = tax_value.values[0]
+    result_message += "<b>✂️💵 Налог</b>: {}\n".format(tax_value)
+
   manager_contacts = filtered_df.get('контакты менеджера')
   # Если серия не равна None и не пустая, то берем первый элемент (значение)
   if manager_contacts is not None and not manager_contacts.empty:
-      if len(manager_contacts.values) > 1:
-        manager_contacts = manager_contacts.values[1]
-      else:
-        manager_contacts = manager_contacts.values[0]
-      result_message += "<b>☎ Контакты менеджера</b>: {}\n".format(manager_contacts)
-    
-  bot.send_message(message.chat.id,
-                   result_message,
-                   parse_mode='HTML',)
+    if len(manager_contacts.values) > 1:
+      manager_contacts = manager_contacts.values[1]
+    else:
+      manager_contacts = manager_contacts.values[0]
+    result_message += "<b>☎ Контакты менеджера</b>: {}\n".format(
+        manager_contacts)
+
+  bot.send_message(
+      message.chat.id,
+      result_message,
+      parse_mode='HTML',
+  )
+
+  bot.register_next_step_handler(message, fork_of_functions)
+
 
 def fork_of_functions(message):
   if message.text.lower() == "вернуться в главное меню":
