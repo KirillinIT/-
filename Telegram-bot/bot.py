@@ -6,11 +6,13 @@ from background import keep_alive  #импорт функции для подд�
 
 #basic
 import pandas as pd
-from functools import partial
+import re
 
-#data
+
 df = pd.read_csv('bufer.csv')
-token = 'TOKEN'  # Токен бота  # Замените на свой токен
+
+token = '6420154690:AAE3yJVrEnBWQ_XO_vMTThMbdVPzgt2a8EE'  # Токен бота  # Замените на свой токен
+
 bot = telebot.TeleBot(token)
 
 
@@ -19,19 +21,19 @@ bot = telebot.TeleBot(token)
 def start(message):
   markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
   item1 = types.KeyboardButton("Найти блогера по имени")
-  item2 = types.KeyboardButton("Найти блогера по ссылке")
-  item3 = types.KeyboardButton("Найти блогера по тематике")
-  item4 = types.KeyboardButton("Найти блогеров по определённым соц. сетям")
+  # item2 = types.KeyboardButton("Найти блогера по ссылке")
+  # item3 = types.KeyboardButton("Найти блогера по тематике")
+  # item4 = types.KeyboardButton("Найти блогеров по определённым соц. сетям")
   item5 = types.KeyboardButton("Поиск по определённому виду рекламы")
-  item6 = types.KeyboardButton("Поиск по бюджету")
-  item7 = types.KeyboardButton("Добавить блогера в бота")
+  # item6 = types.KeyboardButton("Поиск по определённому бюджету")
+  # item7 = types.KeyboardButton("Добавить блогера в бота")
   markup.add(item1)
-  markup.add(item2)
-  markup.add(item3)
-  markup.add(item4)
+  # markup.add(item2)
+  # markup.add(item3)
+  # markup.add(item4)
   markup.add(item5)
-  markup.add(item6)
-  markup.add(item7)
+  # markup.add(item6)
+  # markup.add(item7)
   img = open('blog-articles.png', 'rb')  # Подтягиваем фотку для приветствия
   bot.send_photo(
       message.chat.id,
@@ -237,6 +239,111 @@ def try_other_social_networks(message):
     bot.send_message(message.chat.id, "Имя блогера не найдено.")
 
 
+
+@bot.message_handler(func=lambda message: message.text == "Поиск по определённому виду рекламы")
+def find_blogger_by_social_media(message):
+  if message.text.lower() == "вернуться в главное меню":
+    return_to_main_menu(message)
+  else:
+      markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+      item1 = types.KeyboardButton("Telegram")
+      item2 = types.KeyboardButton("Instagram")
+
+      item3 = types.KeyboardButton("Группы в VK")
+      item4 = types.KeyboardButton("Личные страницы в VK")
+      item5 = types.KeyboardButton("VK Видео")
+
+      item6 = types.KeyboardButton("YouTube")
+      item7 = types.KeyboardButton("RuTube")
+
+      item8 = types.KeyboardButton("Дзен")
+      item9 = types.KeyboardButton("Дзен Шоу")
+
+      item10 = types.KeyboardButton("Одноклассники")
+      item11 = types.KeyboardButton("OK Шоу")
+
+      item12 = types.KeyboardButton("Twitch")
+
+      item13 = types.KeyboardButton("TikTok")
+
+      item14 = types.KeyboardButton("Threads")
+      item15 = types.KeyboardButton("Likee")
+      item16 = types.KeyboardButton("Yappy")
+
+      item17 = types.KeyboardButton("Подкасты")
+      item18 = types.KeyboardButton("Вернуться в главное меню")
+
+      markup.add(item1, item2)
+      markup.add(item3, item4, item5)
+      markup.add(item6)
+      markup.add(item7)
+      markup.add(item8, item9)
+      markup.add(item10, item11)
+      markup.add(item12)
+      markup.add(item13)
+      markup.add(item14, item15, item16)
+      markup.add(item17)
+      markup.add(item18)
+
+  bot.send_message(
+          message.chat.id,
+          "Выберите социальную сеть, в которой вам интересна реклама с помощью кнопок ниже", reply_markup=markup)
+
+  bot.register_next_step_handler(
+        message, find_blogger_by_social_media_next)  
+
+
+
+def find_blogger_by_social_media_next(message):
+    social_media = message.text
+    df_social_media = df.filter(like=social_media, axis=1)
+    # Оставляем только столбцы, содержащие "стоимость"
+    df_social_media = df_social_media.filter(like='стоимость', axis=1)
+    
+    df_social_media = df_social_media.rename(
+        columns=lambda x: x.replace(f'{social_media} ', ''))
+    df_social_media.columns = df_social_media.columns.str.replace('стоимость за', '')
+    df_social_media = df_social_media.loc[:, ~df_social_media.columns.str.contains('охват')]
+    col_names_social_media = list(df_social_media.columns)
+
+# Черновик
+# КОД ДЛЯ ДИНАМИЧЕСКИХ КНОПОК  
+    # col_names_social_media = [re.sub(r'\(.*\)', '', item) for item in col_names_social_media]
+    # col_names_social_media = [item.replace('Телеграм', 'Тг') for item in col_names_social_media]
+    # col_names_social_media = [item.replace('Инстаграм', 'Инст') for item in col_names_social_media]
+    # col_names_social_media = [item[:18] + '...' if len(item) > 21 else item for item in col_names_social_media]
+
+
+    # invalid_characters = ['@', '#', '$', '%', '&', '*', ' ']
+    # cleaned_col_names = [re.sub('|'.join(map(re.escape, invalid_characters)), '', col_name) for col_name in col_names_social_media]
+
+    # bot.send_message(message.chat.id, f"Выберите опцию{col_names_social_media}:")
+    # # Создаем инлайн-клавиатуру с кнопками на основе столбцов
+    # markup = types.InlineKeyboardMarkup(row_width=1)
+    # for col_name in col_names_social_media:
+    #     button = types.InlineKeyboardButton(col_name, callback_data=col_name)
+    #     markup.add(button)
+      
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    for item in col_names_social_media:
+        button = types.KeyboardButton(item)
+        markup.add(button)
+    
+    item555 = types.KeyboardButton("Вернуться в главное меню")
+    markup.add(item555)
+
+  
+    
+    # Отправляем сообщение с клавиатурой
+    bot.send_message(message.chat.id, "Выберите опцию:", reply_markup=markup)
+
+
+
+
+
+
+  
+
 # Обработчик команды /return
 @bot.message_handler(
     func=lambda message: message.text.lower() == "вернуться в главное меню")
@@ -246,15 +353,19 @@ def return_to_main_menu(message):
   markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
                                      one_time_keyboard=True)
   item1 = types.KeyboardButton("Найти блогера по имени")
-  item2 = types.KeyboardButton("Найти блогера по ссылке")
-  item3 = types.KeyboardButton("Найти блогера по тематике")
-  item4 = types.KeyboardButton("Поиск блогеров по определённым соц. сетям")
-  item5 = types.KeyboardButton("Добавить блогера в бота")
+  # item2 = types.KeyboardButton("Найти блогера по ссылке")
+  # item3 = types.KeyboardButton("Найти блогера по тематике")
+  # item4 = types.KeyboardButton("Найти блогеров по определённым соц. сетям")
+  item5 = types.KeyboardButton("Поиск по определённому виду рекламы")
+  # item6 = types.KeyboardButton("Поиск по определённому бюджету")
+  # item7 = types.KeyboardButton("Добавить блогера в бота")
   markup.add(item1)
-  markup.add(item2)
-  markup.add(item3)
-  markup.add(item4)
+  # markup.add(item2)
+  # markup.add(item3)
+  # markup.add(item4)
   markup.add(item5)
+  # markup.add(item6)
+  # markup.add(item7)
 
   bot.send_message(message.chat.id,
                    "Продолжите пользоваться нашим ботом с помощью кнопок ниже",
