@@ -80,46 +80,76 @@ def search_blogger(message):
     filtered_df = df[df['блогер'].str.contains(blogger_name, na=False)]
 
     if not filtered_df.empty:
-      # Задаем вопрос о социальных сетях и создаем клавиатуру
+      first_words = []
+
+      columns_to_exclude = [column for column in filtered_df.columns if column.startswith("Unnamed:")]
+      filtered_df = filtered_df.drop(columns=columns_to_exclude)
+      
+      for index, row in filtered_df.iterrows():
+        if not pd.isna(row).all():  # Проверяем, что текущая строка не пуста (не все значения NaN)
+            for column in filtered_df.columns:
+                # Проверяем, что значение в столбце не является NaN
+                if not pd.isna(row[column]):
+                    # Проверяем, что столбец не содержит ключевых слов в названии
+                    if not any(word in column.lower() for word in ["тематика", "налог", "контакты", "блогер"]):
+                        words = column.split()
+                        for word in words:
+                            if word.lower() == "vk":
+                                first_words.append(" ".join(words[:2]))
+                                break  # Для случаев, когда "VK" встречается, достаточно первого совпадения
+                        else:
+                            first_words.append(words[0])
+
+      # Преобразуем список первых слов в уникальный список
+      unique_first_words = list(set(first_words))
+
+
       markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-      item1 = types.KeyboardButton("Telegram")
-      item2 = types.KeyboardButton("Instagram")
+      for item in unique_first_words:
+        button = types.KeyboardButton(item)
+        markup.add(button)
+      item555 = types.KeyboardButton("Вернуться в главное меню")
+      markup.add(item555)
+      # Задаем вопрос о социальных сетях и создаем клавиатуру
+      # markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+      # item1 = types.KeyboardButton("Telegram")
+      # item2 = types.KeyboardButton("Instagram")
 
-      item3 = types.KeyboardButton("Группы в VK")
-      item4 = types.KeyboardButton("Личные страницы в VK")
-      item5 = types.KeyboardButton("VK Видео")
+      # item3 = types.KeyboardButton("Группы в VK")
+      # item4 = types.KeyboardButton("Личные страницы в VK")
+      # item5 = types.KeyboardButton("VK Видео")
 
-      item6 = types.KeyboardButton("YouTube")
-      item7 = types.KeyboardButton("RuTube")
+      # item6 = types.KeyboardButton("YouTube")
+      # item7 = types.KeyboardButton("RuTube")
 
-      item8 = types.KeyboardButton("Дзен")
-      item9 = types.KeyboardButton("Дзен Шоу")
+      # item8 = types.KeyboardButton("Дзен")
+      # item9 = types.KeyboardButton("Дзен Шоу")
 
-      item10 = types.KeyboardButton("Одноклассники")
-      item11 = types.KeyboardButton("OK Шоу")
+      # item10 = types.KeyboardButton("Одноклассники")
+      # item11 = types.KeyboardButton("OK Шоу")
 
-      item12 = types.KeyboardButton("Twitch")
+      # item12 = types.KeyboardButton("Twitch")
 
-      item13 = types.KeyboardButton("TikTok")
+      # item13 = types.KeyboardButton("TikTok")
 
-      item14 = types.KeyboardButton("Threads")
-      item15 = types.KeyboardButton("Likee")
-      item16 = types.KeyboardButton("Yappy")
+      # item14 = types.KeyboardButton("Threads")
+      # item15 = types.KeyboardButton("Likee")
+      # item16 = types.KeyboardButton("Yappy")
 
-      item17 = types.KeyboardButton("Подкасты")
-      item18 = types.KeyboardButton("Вернуться в главное меню")
+      # item17 = types.KeyboardButton("Подкасты")
+      # item18 = types.KeyboardButton("Вернуться в главное меню")
 
-      markup.add(item1, item2)
-      markup.add(item3, item4, item5)
-      markup.add(item6)
-      markup.add(item7)
-      markup.add(item8, item9)
-      markup.add(item10, item11)
-      markup.add(item12)
-      markup.add(item13)
-      markup.add(item14, item15, item16)
-      markup.add(item17)
-      markup.add(item18)
+      # markup.add(item1, item2)
+      # markup.add(item3, item4, item5)
+      # markup.add(item6)
+      # markup.add(item7)
+      # markup.add(item8, item9)
+      # markup.add(item10, item11)
+      # markup.add(item12)
+      # markup.add(item13)
+      # markup.add(item14, item15, item16)
+      # markup.add(item17)
+      # markup.add(item18)
 
       bot.send_message(
           message.chat.id,
@@ -166,8 +196,8 @@ def filter_data_by_social_network(message, filtered_df):
       # result_message = "🖤 Результаты поиска для социальной сети :\n\n"
 
       # Добавляем информацию о блогере в начале каждой строки
-      result_message += "<b>Имя блогера</b>: {}\n".format(
-          row['блогер'].title())
+      result_message += "<b>Имя блогера</b>: {}\n".format(row['блогер'])
+          # row['блогер'].title())
 
       # Перебираем столбцы и их значения в текущей строке
       for column, value in row.items():
@@ -179,7 +209,9 @@ def filter_data_by_social_network(message, filtered_df):
                                                      value)
 
       # Добавляем статистику в конец строки
-      result_message += "<b>Статистика:</b> {}\n".format(row['статистика'])
+      if 'статистика' in row:
+        if not pd.isna(row['статистика']):
+          result_message += "<b>Статистика:</b> {}\n".format(row['статистика'])
       # # Отправляем результат пользователю
       # result_message += "<b>\n\n✂️💵 Налог</b>: {}\n".format(row['налог'])
       # result_message += "<b>☎ Контакты менеджера</b>: {}\n".format(row['контакты менеджера'])
