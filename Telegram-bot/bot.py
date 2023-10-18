@@ -202,11 +202,15 @@ def filter_data_by_social_network(message, filtered_df):
       # Перебираем столбцы и их значения в текущей строке
       for column, value in row.items():
         # Проверяем, что значение не является NaN и не соответствует столбцу 'тематика'
-        if not pd.isna(
-            value
-        ) and column != 'тематика' and column != 'блогер' and column != 'статистика':
-          result_message += "<b>{}</b>: {}\n".format(column.capitalize(),
-                                                     value)
+        if not pd.isna(value) and column != 'тематика' and column != 'блогер' and column != 'статистика':
+          # Если значение - число, форматируем его с использованием пробела вместо запятой
+          if isinstance(value, (int, float)):
+              formatted_value = '{:,.0f}'.format(value).replace(',', ' ')
+              result_message += "<b>{}</b>: {}\n".format(column.capitalize(), formatted_value)
+          else:
+              result_message += "<b>{}</b>: {}\n".format(column.capitalize(), value)
+          # result_message += "<b>{}</b>: {}\n".format(column.capitalize(),
+          #                                            value)
 
       # Добавляем статистику в конец строки
       if 'статистика' in row:
