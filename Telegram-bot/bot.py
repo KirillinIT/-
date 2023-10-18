@@ -11,7 +11,7 @@ import re
 
 df = pd.read_csv('bufer.csv')
 
-token = '6420154690:AAE3yJVrEnBWQ_XO_vMTThMbdVPzgt2a8EE'  # Токен бота  # Замените на свой токен
+token = 'TOKEN'  # Токен бота  # Замените на свой токен
 
 bot = telebot.TeleBot(token)
 
