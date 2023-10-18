@@ -77,7 +77,7 @@ def search_blogger(message):
     current_blogger_name = message
 
     # Ищем блогера в DataFrame
-    filtered_df = df[df['блогер'].str.contains(blogger_name)]
+    filtered_df = df[df['блогер'].str.contains(blogger_name, na=False)]
 
     if not filtered_df.empty:
       # Задаем вопрос о социальных сетях и создаем клавиатуру
@@ -137,7 +137,7 @@ def filter_data_by_social_network(message, filtered_df):
   social_network = message.text
 
   # Фильтруем данные по выбранной социальной сети
-  mask = filtered_df.columns.str.contains(social_network, case=False)
+  mask = filtered_df.columns.str.contains(social_network, na=False, case=False)
 
   filtered_df_socnet = filtered_df.loc[:, mask]
 
@@ -239,110 +239,102 @@ def try_other_social_networks(message):
     bot.send_message(message.chat.id, "Имя блогера не найдено.")
 
 
-
-@bot.message_handler(func=lambda message: message.text == "Поиск по определённому виду рекламы")
+@bot.message_handler(
+    func=lambda message: message.text == "Поиск по определённому виду рекламы")
 def find_blogger_by_social_media(message):
   if message.text.lower() == "вернуться в главное меню":
     return_to_main_menu(message)
   else:
-      markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-      item1 = types.KeyboardButton("Telegram")
-      item2 = types.KeyboardButton("Instagram")
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    item1 = types.KeyboardButton("Telegram")
+    item2 = types.KeyboardButton("Instagram")
 
-      item3 = types.KeyboardButton("Группы в VK")
-      item4 = types.KeyboardButton("Личные страницы в VK")
-      item5 = types.KeyboardButton("VK Видео")
+    item3 = types.KeyboardButton("Группы в VK")
+    item4 = types.KeyboardButton("Личные страницы в VK")
+    item5 = types.KeyboardButton("VK Видео")
 
-      item6 = types.KeyboardButton("YouTube")
-      item7 = types.KeyboardButton("RuTube")
+    item6 = types.KeyboardButton("YouTube")
+    item7 = types.KeyboardButton("RuTube")
 
-      item8 = types.KeyboardButton("Дзен")
-      item9 = types.KeyboardButton("Дзен Шоу")
+    item8 = types.KeyboardButton("Дзен")
+    item9 = types.KeyboardButton("Дзен Шоу")
 
-      item10 = types.KeyboardButton("Одноклассники")
-      item11 = types.KeyboardButton("OK Шоу")
+    item10 = types.KeyboardButton("Одноклассники")
+    item11 = types.KeyboardButton("OK Шоу")
 
-      item12 = types.KeyboardButton("Twitch")
+    item12 = types.KeyboardButton("Twitch")
 
-      item13 = types.KeyboardButton("TikTok")
+    item13 = types.KeyboardButton("TikTok")
 
-      item14 = types.KeyboardButton("Threads")
-      item15 = types.KeyboardButton("Likee")
-      item16 = types.KeyboardButton("Yappy")
+    item14 = types.KeyboardButton("Threads")
+    item15 = types.KeyboardButton("Likee")
+    item16 = types.KeyboardButton("Yappy")
 
-      item17 = types.KeyboardButton("Подкасты")
-      item18 = types.KeyboardButton("Вернуться в главное меню")
+    item17 = types.KeyboardButton("Подкасты")
+    item18 = types.KeyboardButton("Вернуться в главное меню")
 
-      markup.add(item1, item2)
-      markup.add(item3, item4, item5)
-      markup.add(item6)
-      markup.add(item7)
-      markup.add(item8, item9)
-      markup.add(item10, item11)
-      markup.add(item12)
-      markup.add(item13)
-      markup.add(item14, item15, item16)
-      markup.add(item17)
-      markup.add(item18)
+    markup.add(item1, item2)
+    markup.add(item3, item4, item5)
+    markup.add(item6)
+    markup.add(item7)
+    markup.add(item8, item9)
+    markup.add(item10, item11)
+    markup.add(item12)
+    markup.add(item13)
+    markup.add(item14, item15, item16)
+    markup.add(item17)
+    markup.add(item18)
 
   bot.send_message(
-          message.chat.id,
-          "Выберите социальную сеть, в которой вам интересна реклама с помощью кнопок ниже", reply_markup=markup)
+      message.chat.id,
+      "Выберите социальную сеть, в которой вам интересна реклама с помощью кнопок ниже",
+      reply_markup=markup)
 
-  bot.register_next_step_handler(
-        message, find_blogger_by_social_media_next)  
-
+  bot.register_next_step_handler(message, find_blogger_by_social_media_next)
 
 
 def find_blogger_by_social_media_next(message):
-    social_media = message.text
-    df_social_media = df.filter(like=social_media, axis=1)
-    # Оставляем только столбцы, содержащие "стоимость"
-    df_social_media = df_social_media.filter(like='стоимость', axis=1)
-    
-    df_social_media = df_social_media.rename(
-        columns=lambda x: x.replace(f'{social_media} ', ''))
-    df_social_media.columns = df_social_media.columns.str.replace('стоимость за', '')
-    df_social_media = df_social_media.loc[:, ~df_social_media.columns.str.contains('охват')]
-    col_names_social_media = list(df_social_media.columns)
+  social_media = message.text
+  df_social_media = df.filter(like=social_media, axis=1)
+  # Оставляем только столбцы, содержащие "стоимость"
+  df_social_media = df_social_media.filter(like='стоимость', axis=1)
 
-# Черновик
-# КОД ДЛЯ ДИНАМИЧЕСКИХ КНОПОК  
-    # col_names_social_media = [re.sub(r'\(.*\)', '', item) for item in col_names_social_media]
-    # col_names_social_media = [item.replace('Телеграм', 'Тг') for item in col_names_social_media]
-    # col_names_social_media = [item.replace('Инстаграм', 'Инст') for item in col_names_social_media]
-    # col_names_social_media = [item[:18] + '...' if len(item) > 21 else item for item in col_names_social_media]
+  df_social_media = df_social_media.rename(
+      columns=lambda x: x.replace(f'{social_media} ', ''))
+  df_social_media.columns = df_social_media.columns.str.replace(
+      'стоимость за', '')
+  df_social_media = df_social_media.loc[:, ~df_social_media.columns.str.
+                                        contains('охват', na=False)]
+  col_names_social_media = list(df_social_media.columns)
 
+  # Черновик
+  # КОД ДЛЯ ДИНАМИЧЕСКИХ КНОПОК
+  # col_names_social_media = [re.sub(r'\(.*\)', '', item) for item in col_names_social_media]
+  # col_names_social_media = [item.replace('Телеграм', 'Тг') for item in col_names_social_media]
+  # col_names_social_media = [item.replace('Инстаграм', 'Инст') for item in col_names_social_media]
+  # col_names_social_media = [item[:18] + '...' if len(item) > 21 else item for item in col_names_social_media]
 
-    # invalid_characters = ['@', '#', '$', '%', '&', '*', ' ']
-    # cleaned_col_names = [re.sub('|'.join(map(re.escape, invalid_characters)), '', col_name) for col_name in col_names_social_media]
+  # invalid_characters = ['@', '#', '$', '%', '&', '*', ' ']
+  # cleaned_col_names = [re.sub('|'.join(map(re.escape, invalid_characters)), '', col_name) for col_name in col_names_social_media]
 
-    # bot.send_message(message.chat.id, f"Выберите опцию{col_names_social_media}:")
-    # # Создаем инлайн-клавиатуру с кнопками на основе столбцов
-    # markup = types.InlineKeyboardMarkup(row_width=1)
-    # for col_name in col_names_social_media:
-    #     button = types.InlineKeyboardButton(col_name, callback_data=col_name)
-    #     markup.add(button)
-      
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    for item in col_names_social_media:
-        button = types.KeyboardButton(item)
-        markup.add(button)
-    
-    item555 = types.KeyboardButton("Вернуться в главное меню")
-    markup.add(item555)
+  # bot.send_message(message.chat.id, f"Выберите опцию{col_names_social_media}:")
+  # # Создаем инлайн-клавиатуру с кнопками на основе столбцов
+  # markup = types.InlineKeyboardMarkup(row_width=1)
+  # for col_name in col_names_social_media:
+  #     button = types.InlineKeyboardButton(col_name, callback_data=col_name)
+  #     markup.add(button)
 
-  
-    
-    # Отправляем сообщение с клавиатурой
-    bot.send_message(message.chat.id, "Выберите опцию:", reply_markup=markup)
+  markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+  for item in col_names_social_media:
+    button = types.KeyboardButton(item)
+    markup.add(button)
 
+  item555 = types.KeyboardButton("Вернуться в главное меню")
+  markup.add(item555)
 
+  # Отправляем сообщение с клавиатурой
+  bot.send_message(message.chat.id, "Выберите опцию:", reply_markup=markup)
 
-
-
-
-  
 
 # Обработчик команды /return
 @bot.message_handler(
