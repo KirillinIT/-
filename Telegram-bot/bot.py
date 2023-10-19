@@ -82,27 +82,32 @@ def search_blogger(message):
     if not filtered_df.empty:
       first_words = []
 
-      columns_to_exclude = [column for column in filtered_df.columns if column.startswith("Unnamed:")]
+      columns_to_exclude = [
+          column for column in filtered_df.columns
+          if column.startswith("Unnamed:")
+      ]
       filtered_df = filtered_df.drop(columns=columns_to_exclude)
-      
+
       for index, row in filtered_df.iterrows():
-        if not pd.isna(row).all():  # Проверяем, что текущая строка не пуста (не все значения NaN)
-            for column in filtered_df.columns:
-                # Проверяем, что значение в столбце не является NaN
-                if not pd.isna(row[column]):
-                    # Проверяем, что столбец не содержит ключевых слов в названии
-                    if not any(word in column.lower() for word in ["тематика", "налог", "контакты", "блогер"]):
-                        words = column.split()
-                        for word in words:
-                            if word.lower() == "vk":
-                                first_words.append(" ".join(words[:2]))
-                                break  # Для случаев, когда "VK" встречается, достаточно первого совпадения
-                        else:
-                            first_words.append(words[0])
+        if not pd.isna(row).all(
+        ):  # Проверяем, что текущая строка не пуста (не все значения NaN)
+          for column in filtered_df.columns:
+            # Проверяем, что значение в столбце не является NaN
+            if not pd.isna(row[column]):
+              # Проверяем, что столбец не содержит ключевых слов в названии
+              if not any(
+                  word in column.lower()
+                  for word in ["тематика", "налог", "контакты", "блогер"]):
+                words = column.split()
+                for word in words:
+                  if word.lower() == "vk":
+                    first_words.append(" ".join(words[:2]))
+                    break  # Для случаев, когда "VK" встречается, достаточно первого совпадения
+                else:
+                  first_words.append(words[0])
 
       # Преобразуем список первых слов в уникальный список
       unique_first_words = list(set(first_words))
-
 
       markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
       for item in unique_first_words:
@@ -156,7 +161,18 @@ def search_blogger(message):
           "Блогер с именем '{}' найден. Выберите социальные сети, которые вас интересуют:"
           .format(blogger_name),
           reply_markup=markup)
+      
+    else:
+    # Если блогера не нашли, отправляем сообщение с предложением вернуться в главное меню
+      markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+      item555 = types.KeyboardButton("Вернуться в главное меню")    
+      markup.add(item555)
+      bot.send_message(
+          message.chat.id,
+          f"Блогер с именем '{blogger_name}' не найден. Вернитесь в главное меню.",
+          reply_markup=markup)
 
+    
     bot.register_next_step_handler(
         message, partial(filter_data_by_social_network,
                          filtered_df=filtered_df))
@@ -164,92 +180,104 @@ def search_blogger(message):
 
 # Функция для фильтрации данных по социальной сети
 def filter_data_by_social_network(message, filtered_df):
-  social_network = message.text
-
-  # Фильтруем данные по выбранной социальной сети
-  mask = filtered_df.columns.str.contains(social_network, na=False, case=False)
-
-  filtered_df_socnet = filtered_df.loc[:, mask]
-
-  filtered_df_socnet = filtered_df_socnet.rename(
-      columns=lambda x: x.replace(f'{social_network} ', ''))
-
-  filtered_df_socnet = filtered_df_socnet.apply(
-      lambda x: x.map(lambda x: np.nan if x is None else x))
-
-  # Добавляем кнопки
-  keyboard_data_social_network = types.ReplyKeyboardMarkup(
-      one_time_keyboard=True)
-  item1 = types.KeyboardButton('Найти другие соц.сети блогера')
-  item2 = types.KeyboardButton('Вернуться в главное меню')
-  keyboard_data_social_network.add(item1)
-  keyboard_data_social_network.add(item2)
-
-  result_message = ""  # Инициализируем result_message
-
-  for index, row in filtered_df_socnet.iterrows():
-    # Проверяем, что текущая строка не пуста
-    if not row.isnull().all():
-      #Инициализируем сообщение для вывода результатов
-      result_message = "🖤 Результаты поиска для социальной сети {}:\n\n".format(
-          social_network)
-      # result_message = "🖤 Результаты поиска для социальной сети :\n\n"
-
-      # Добавляем информацию о блогере в начале каждой строки
-      result_message += "<b>Имя блогера</b>: {}\n".format(row['блогер'])
-          # row['блогер'].title())
-
-      # Перебираем столбцы и их значения в текущей строке
-      for column, value in row.items():
-        # Проверяем, что значение не является NaN и не соответствует столбцу 'тематика'
-        if not pd.isna(value) and column != 'тематика' and column != 'блогер' and column != 'статистика':
-          # Если значение - число, форматируем его с использованием пробела вместо запятой
-          if isinstance(value, (int, float)):
+  if message.text.lower() == "вернуться в главное меню":
+    return_to_main_menu(message)
+  else:  
+    social_network = message.text
+  
+    # Фильтруем данные по выбранной социальной сети
+    mask = filtered_df.columns.str.contains(social_network, na=False, case=False)
+  
+    filtered_df_socnet = filtered_df.loc[:, mask]
+  
+    filtered_df_socnet = filtered_df_socnet.rename(
+        columns=lambda x: x.replace(f'{social_network} ', ''))
+  
+    filtered_df_socnet = filtered_df_socnet.apply(
+        lambda x: x.map(lambda x: np.nan if x is None else x))
+  
+    # Добавляем кнопки
+    keyboard_data_social_network = types.ReplyKeyboardMarkup(
+        one_time_keyboard=True)
+    item1 = types.KeyboardButton('Найти другие соц.сети блогера')
+    item2 = types.KeyboardButton('Вернуться в главное меню')
+    keyboard_data_social_network.add(item1)
+    keyboard_data_social_network.add(item2)
+  
+    result_message = ""  # Инициализируем result_message
+  
+    for index, row in filtered_df_socnet.iterrows():
+      # Проверяем, что текущая строка не пуста
+      if not row.isnull().all():
+        # Инициализируем сообщение для вывода результатов
+        result_message = "🖤 Результаты поиска для социальной сети {}:\n\n".format(
+            social_network)
+  
+        # Добавляем информацию о блогере в начале каждой строки
+        result_message += "<b>Имя блогера</b>: {}\n".format(
+            row['блогер'].title())
+  
+        # Перебираем столбцы и их значения в текущей строке
+        result_message += "\n<b>Общая информация и статистика:</b>\n"
+        for column, value in row.items():
+          # Проверяем, что значение не является NaN и не соответствует столбцу 'тематика' или 'статистика'
+          # if not pd.isna(value) and column != 'тематика' and column != 'блогер' and column != 'статистика' and column != 'стоимость':
+          if not pd.isna(
+              value
+          ) and column != 'тематика' and column != 'блогер' and column != 'статистика' and 'стоимость' not in column:
+            # Если значение - число, форматируем его с использованием пробела вместо запятой
+            if isinstance(value, (int, float)):
               formatted_value = '{:,.0f}'.format(value).replace(',', ' ')
-              result_message += "<b>{}</b>: {}\n".format(column.capitalize(), formatted_value)
-          else:
-              result_message += "<b>{}</b>: {}\n".format(column.capitalize(), value)
-          # result_message += "<b>{}</b>: {}\n".format(column.capitalize(),
-          #                                            value)
-
-      # Добавляем статистику в конец строки
-      if 'статистика' in row:
+              result_message += "  ▶ <b>{}</b>: {}\n".format(
+                  column.capitalize(), formatted_value)
+            else:
+              result_message += "  ▶ <b>{}</b>: {}\n".format(
+                  column.capitalize(), value)
+  
+          # Добавляем столбцы с словом "стоимость"
+        result_message += "\n<b>Стоимость рекламных размещений:</b>\n"
+        for column, value in row.items():
+          if 'стоимость' in column and not pd.isna(value):
+            column_without_first_word = ' '.join(column.split()[1:])
+            if isinstance(value, (int, float)):
+              formatted_cost = '{:,.0f}'.format(value).replace(',', ' ')
+              result_message += "  ▶ <b>{}</b>: {} рублей\n".format(
+                  column_without_first_word.capitalize(), formatted_cost)
+  
+        # Добавляем статистику в конец строки
         if not pd.isna(row['статистика']):
-          result_message += "<b>Статистика:</b> {}\n".format(row['статистика'])
-      # # Отправляем результат пользователю
-      # result_message += "<b>\n\n✂️💵 Налог</b>: {}\n".format(row['налог'])
-      # result_message += "<b>☎ Контакты менеджера</b>: {}\n".format(row['контакты менеджера'])
-
-      max_message_length = 4000  # Максимальная длина сообщения в Telegram
-      result_message += "\n\n"
-      for i in range(0, len(result_message), max_message_length):
-        bot.send_message(message.chat.id,
-                         result_message[i:i + max_message_length],
-                         parse_mode='HTML',
-                         reply_markup=keyboard_data_social_network)
-
-  result_message = ""
-  tax_value = filtered_df.get('налог')
-  # Если серия не равна None и не пустая, то берем первый элемент (значение)
-  if tax_value is not None and not tax_value.empty:
-    tax_value = tax_value.values[0]
-    result_message += "<b>✂️💵 Налог</b>: {}\n".format(tax_value)
-
-  manager_contacts = filtered_df.get('контакты менеджера')
-  # Если серия не равна None и не пустая, то берем первый элемент (значение)
-  if manager_contacts is not None and not manager_contacts.empty:
-    if len(manager_contacts.values) > 1:
-      manager_contacts = manager_contacts.values[1]
-    else:
-      manager_contacts = manager_contacts.values[0]
-    result_message += "<b>☎ Контакты менеджера</b>: {}\n".format(
-        manager_contacts)
-
-  bot.send_message(
-      message.chat.id,
-      result_message,
-      parse_mode='HTML',
-  )
+          result_message += "\n<b>Статистика:</b> {}\n".format(row['статистика'])
+  
+        max_message_length = 4000  # Максимальная длина сообщения в Telegram
+        result_message += "\n\n"
+        for i in range(0, len(result_message), max_message_length):
+          bot.send_message(message.chat.id,
+                           result_message[i:i + max_message_length],
+                           parse_mode='HTML',
+                           reply_markup=keyboard_data_social_network)
+  
+    result_message = ""
+    tax_value = filtered_df.get('налог')
+    # Если серия не равна None и не пустая, то берем первый элемент (значение)
+    if tax_value is not None and not tax_value.empty:
+      tax_value = tax_value.values[0]
+      result_message += "<b>✂️💵 Налог</b>: {}\n".format(tax_value)
+  
+    manager_contacts = filtered_df.get('контакты менеджера')
+    # Если серия не равна None и не пустая, то берем первый элемент (значение)
+    if manager_contacts is not None and not manager_contacts.empty:
+      if len(manager_contacts.values) > 1:
+        manager_contacts = manager_contacts.values[1]
+      else:
+        manager_contacts = manager_contacts.values[0]
+      result_message += "<b>☎ Контакты менеджера</b>: {}\n".format(
+          manager_contacts)
+  
+    bot.send_message(
+        message.chat.id,
+        result_message,
+        parse_mode='HTML',
+    )
 
   bot.register_next_step_handler(message, fork_of_functions)
 
