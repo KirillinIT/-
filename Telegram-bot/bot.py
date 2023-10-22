@@ -362,8 +362,11 @@ def find_blogger_by_social_media(message):
 def find_blogger_by_social_media_next(message):
   social_media = message.text
   df_social_media = df.filter(like=social_media, axis=1)
+
   # Оставляем только столбцы, содержащие "стоимость"
-  df_social_media = df_social_media.filter(like='стоимость', axis=1)
+  # df_social_media = df_social_media.filter(like='стоимость', axis=1)
+  df_social_media = df_social_media.loc[:, df_social_media.columns.str.contains('стоимость|блогер', case=False, na=False)]
+
 
   df_social_media = df_social_media.rename(
       columns=lambda x: x.replace(f'{social_media} ', ''))
@@ -374,24 +377,6 @@ def find_blogger_by_social_media_next(message):
   df_social_media = df_social_media.loc[:, ~df_social_media.columns.str.
                                         contains('охват', na=False)]
   col_names_social_media = list(df_social_media.columns)
-
-
-  # Черновик
-  # КОД ДЛЯ ДИНАМИЧЕСКИХ КНОПОК
-  # col_names_social_media = [re.sub(r'\(.*\)', '', item) for item in col_names_social_media]
-  # col_names_social_media = [item.replace('Телеграм', 'Тг') for item in col_names_social_media]
-  # col_names_social_media = [item.replace('Инстаграм', 'Инст') for item in col_names_social_media]
-  # col_names_social_media = [item[:18] + '...' if len(item) > 21 else item for item in col_names_social_media]
-
-  # invalid_characters = ['@', '#', '$', '%', '&', '*', ' ']
-  # cleaned_col_names = [re.sub('|'.join(map(re.escape, invalid_characters)), '', col_name) for col_name in col_names_social_media]
-
-  # bot.send_message(message.chat.id, f"Выберите опцию{col_names_social_media}:")
-  # # Создаем инлайн-клавиатуру с кнопками на основе столбцов
-  # markup = types.InlineKeyboardMarkup(row_width=1)
-  # for col_name in col_names_social_media:
-  #     button = types.InlineKeyboardButton(col_name, callback_data=col_name)
-  #     markup.add(button)
 
   markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
   for item in col_names_social_media:
@@ -404,40 +389,106 @@ def find_blogger_by_social_media_next(message):
   # Отправляем сообщение с клавиатурой
   bot.send_message(message.chat.id, "Выберите опцию:", reply_markup=markup)
 
-
-
   bot.register_next_step_handler(
-    message,
-    partial(find_blogger_by_social_media_2_next,
-            df_social_media=df_social_media))
-
+      message,
+      partial(find_blogger_by_social_media_2_next,
+              df_social_media=df_social_media))
 
 def find_blogger_by_social_media_2_next(message, df_social_media):
   position_social_media = message.text
-  
-  mask = df_social_media.columns.str.contains(position_social_media,
-                                            na=False,
-                                            case=False)
-  
-  filtered_df_socnet_position = df_social_media.loc[:, mask]
-  
-  row_counts = filtered_df_socnet_position.count()
+
+  filtered_df_socnet_position = df_social_media[['Блогер', position_social_media]]
+
+  row_counts = filtered_df_socnet_position[position_social_media].count()
   total_rows = row_counts.sum()
 
   markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
   item1 = types.KeyboardButton("Да")
-  item2 = types.KeyboardButton("Нет")
+  item2 = types.KeyboardButton("Нет, вывести всех")
   item555 = types.KeyboardButton("Вернуться в главное меню")
   markup.add(item1, item2)
   markup.add(item555)
   bot.send_message(
-    message.chat.id, f"Найдено <b>{total_rows}</b> варинтов.\n\nХотите ограничить по цене?", parse_mode='HTML', reply_markup=markup)
+      message.chat.id,
+      f"Найдено <b>{total_rows}</b> варинтов.\n\nХотите ограничить по цене?",
+      parse_mode='HTML',
+      reply_markup=markup)
 
+  # bot.register_next_step_handler(message, fork_of_functions_position)
+
+  bot.register_next_step_handler(
+      message,
+      partial(fork_of_functions_position,
+              filtered_df_socnet_position=filtered_df_socnet_position,
+             position_social_media=position_social_media))
+
+
+def fork_of_functions_position(message, filtered_df_socnet_position, position_social_media):
+  if message.text.lower() == "да":
+    find_blogger_by_social_media_price(message, filtered_df_socnet_position, position_social_media)
+  elif message.text.lower() == "нет, вывести всех":
+    find_blogger_by_social_media_all(message)
+  elif message.text.lower() == "вернуться в главное меню":
+    return_to_main_menu(message)
+  else:
+    bot.send_message(message.chat.id, "Ошибка👀. Нажмите /return")
+
+
+def find_blogger_by_social_media_price(message, filtered_df_socnet_position, position_social_media):
+
+  markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+  item555 = types.KeyboardButton("Вернуться в главное меню")
+  markup.add(item555)
+  bot.send_message(
+      message.chat.id,
+      "Введите максимальную стоимость рекламы без нулей и лишних символов.\n\nПример: 1000000",
+      reply_markup=markup)
+
+  bot.register_next_step_handler(
+    message,
+    partial(find_blogger_by_social_media_price_2,
+            filtered_df_socnet_position=filtered_df_socnet_position,
+            position_social_media=position_social_media))
+
+
+
+def find_blogger_by_social_media_price_2(message, filtered_df_socnet_position, position_social_media):
+  if message.text.lower() == "вернуться в главное меню":
+    return_to_main_menu(message)
+  else:
+    price = float(message.text)
+    # Создаем маску для столбцов, чьи значения меньше или равны 'price'
+    mask = (filtered_df_socnet_position['Блогер'].notna()) & (filtered_df_socnet_position[position_social_media] <= price)
+    filtered_df_socnet_position_price = filtered_df_socnet_position[mask].copy()
 
   
 
-# bot.register_next_step_handler(message, fork_of_functions)
+    # 'filtered_df' содержит только столбцы, удовлетворяющие условию
+  
+    # row_counts = filtered_df_socnet_position_price.count()
+    # total_rows = row_counts.sum()
+    total_rows = mask.sum()
+    bot.send_message(message.chat.id,
+                     f"Найдено варинтов: <b>{total_rows}</b>.",
+                     parse_mode='HTML')
+  
+    result_message = ""
+    for _, row in filtered_df_socnet_position_price.iterrows():
+        blogger = row['Блогер'].title()
+        price = row[position_social_media]
 
+        if not pd.isna(price):
+            result_message += "<b>Имя блогера</b>: {}\n".format(blogger)
+            price = '{:,.0f}'.format(price).replace(',', ' ')
+            result_message += "<b>Стоимость</b>: {} рублей\n\n".format(price)
+
+    if result_message:
+        bot.send_message(message.chat.id, result_message, parse_mode='HTML')
+  
+
+
+
+  # bot.send_message(message.chat.id, result_message, parse_mode='HTML')
 
 
 # Обработчик команды /return
@@ -470,3 +521,24 @@ def return_to_main_menu(message):
 
 keep_alive()  #запускаем flask-сервер в отдельном потоке.
 bot.polling(non_stop=True, interval=0)  #запуск бота
+
+# Черновик
+# КОД ДЛЯ ДИНАМИЧЕСКИХ КНОПОК
+# col_names_social_media = [re.sub(r'\(.*\)', '', item) for item in col_names_social_media]
+# col_names_social_media = [item.replace('Телеграм', 'Тг') for item in col_names_social_media]
+# col_names_social_media = [item.replace('Инстаграм', 'Инст') for item in col_names_social_media]
+# col_names_social_media = [item[:18] + '...' if len(item) > 21 else item for item in col_names_social_media]
+
+# invalid_characters = ['@', '#', '$', '%', '&', '*', ' ']
+# cleaned_col_names = [re.sub('|'.join(map(re.escape, invalid_characters)), '', col_name) for col_name in col_names_social_media]
+
+# bot.send_message(message.chat.id, f"Выберите опцию{col_names_social_media}:")
+# # Создаем инлайн-клавиатуру с кнопками на основе столбцов
+# markup = types.InlineKeyboardMarkup(row_width=1)
+# for col_name in col_names_social_media:
+#     button = types.InlineKeyboardButton(col_name, callback_data=col_name)
+#     markup.add(button)
+
+
+
+
