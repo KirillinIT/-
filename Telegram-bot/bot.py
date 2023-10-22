@@ -161,18 +161,17 @@ def search_blogger(message):
           "Блогер с именем '{}' найден. Выберите социальные сети, которые вас интересуют:"
           .format(blogger_name),
           reply_markup=markup)
-      
+
     else:
-    # Если блогера не нашли, отправляем сообщение с предложением вернуться в главное меню
+      # Если блогера не нашли, отправляем сообщение с предложением вернуться в главное меню
       markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-      item555 = types.KeyboardButton("Вернуться в главное меню")    
+      item555 = types.KeyboardButton("Вернуться в главное меню")
       markup.add(item555)
       bot.send_message(
           message.chat.id,
           f"Блогер с именем '{blogger_name}' не найден. Вернитесь в главное меню.",
           reply_markup=markup)
 
-    
     bot.register_next_step_handler(
         message, partial(filter_data_by_social_network,
                          filtered_df=filtered_df))
@@ -182,20 +181,22 @@ def search_blogger(message):
 def filter_data_by_social_network(message, filtered_df):
   if message.text.lower() == "вернуться в главное меню":
     return_to_main_menu(message)
-  else:  
+  else:
     social_network = message.text
-  
+
     # Фильтруем данные по выбранной социальной сети
-    mask = filtered_df.columns.str.contains(social_network, na=False, case=False)
-  
+    mask = filtered_df.columns.str.contains(social_network,
+                                            na=False,
+                                            case=False)
+
     filtered_df_socnet = filtered_df.loc[:, mask]
-  
+
     filtered_df_socnet = filtered_df_socnet.rename(
         columns=lambda x: x.replace(f'{social_network} ', ''))
-  
+
     filtered_df_socnet = filtered_df_socnet.apply(
         lambda x: x.map(lambda x: np.nan if x is None else x))
-  
+
     # Добавляем кнопки
     keyboard_data_social_network = types.ReplyKeyboardMarkup(
         one_time_keyboard=True)
@@ -203,20 +204,20 @@ def filter_data_by_social_network(message, filtered_df):
     item2 = types.KeyboardButton('Вернуться в главное меню')
     keyboard_data_social_network.add(item1)
     keyboard_data_social_network.add(item2)
-  
+
     result_message = ""  # Инициализируем result_message
-  
+
     for index, row in filtered_df_socnet.iterrows():
       # Проверяем, что текущая строка не пуста
       if not row.isnull().all():
         # Инициализируем сообщение для вывода результатов
         result_message = "🖤 Результаты поиска для социальной сети {}:\n\n".format(
             social_network)
-  
+
         # Добавляем информацию о блогере в начале каждой строки
         result_message += "<b>Имя блогера</b>: {}\n".format(
             row['блогер'].title())
-  
+
         # Перебираем столбцы и их значения в текущей строке
         result_message += "\n<b>Общая информация и статистика:</b>\n"
         for column, value in row.items():
@@ -233,7 +234,7 @@ def filter_data_by_social_network(message, filtered_df):
             else:
               result_message += "  ▶ <b>{}</b>: {}\n".format(
                   column.capitalize(), value)
-  
+
           # Добавляем столбцы с словом "стоимость"
         result_message += "\n<b>Стоимость рекламных размещений:</b>\n"
         for column, value in row.items():
@@ -243,11 +244,12 @@ def filter_data_by_social_network(message, filtered_df):
               formatted_cost = '{:,.0f}'.format(value).replace(',', ' ')
               result_message += "  ▶ <b>{}</b>: {} рублей\n".format(
                   column_without_first_word.capitalize(), formatted_cost)
-  
+
         # Добавляем статистику в конец строки
         if not pd.isna(row['статистика']):
-          result_message += "\n<b>Статистика:</b> {}\n".format(row['статистика'])
-  
+          result_message += "\n<b>Статистика:</b> {}\n".format(
+              row['статистика'])
+
         max_message_length = 4000  # Максимальная длина сообщения в Telegram
         result_message += "\n\n"
         for i in range(0, len(result_message), max_message_length):
@@ -255,14 +257,14 @@ def filter_data_by_social_network(message, filtered_df):
                            result_message[i:i + max_message_length],
                            parse_mode='HTML',
                            reply_markup=keyboard_data_social_network)
-  
+
     result_message = ""
     tax_value = filtered_df.get('налог')
     # Если серия не равна None и не пустая, то берем первый элемент (значение)
     if tax_value is not None and not tax_value.empty:
       tax_value = tax_value.values[0]
       result_message += "<b>✂️💵 Налог</b>: {}\n".format(tax_value)
-  
+
     manager_contacts = filtered_df.get('контакты менеджера')
     # Если серия не равна None и не пустая, то берем первый элемент (значение)
     if manager_contacts is not None and not manager_contacts.empty:
@@ -272,7 +274,7 @@ def filter_data_by_social_network(message, filtered_df):
         manager_contacts = manager_contacts.values[0]
       result_message += "<b>☎ Контакты менеджера</b>: {}\n".format(
           manager_contacts)
-  
+
     bot.send_message(
         message.chat.id,
         result_message,
@@ -351,7 +353,7 @@ def find_blogger_by_social_media(message):
 
   bot.send_message(
       message.chat.id,
-      "Выберите социальную сеть, в которой вам интересна реклама с помощью кнопок ниже",
+      "Выберите социальную сеть, в которой вам интересна реклама, с помощью кнопок ниже",
       reply_markup=markup)
 
   bot.register_next_step_handler(message, find_blogger_by_social_media_next)
@@ -366,10 +368,13 @@ def find_blogger_by_social_media_next(message):
   df_social_media = df_social_media.rename(
       columns=lambda x: x.replace(f'{social_media} ', ''))
   df_social_media.columns = df_social_media.columns.str.replace(
-      'стоимость за', '')
+      'стоимость ', '')
+
+  df_social_media.columns = df_social_media.columns.str.capitalize()
   df_social_media = df_social_media.loc[:, ~df_social_media.columns.str.
                                         contains('охват', na=False)]
   col_names_social_media = list(df_social_media.columns)
+
 
   # Черновик
   # КОД ДЛЯ ДИНАМИЧЕСКИХ КНОПОК
@@ -398,6 +403,41 @@ def find_blogger_by_social_media_next(message):
 
   # Отправляем сообщение с клавиатурой
   bot.send_message(message.chat.id, "Выберите опцию:", reply_markup=markup)
+
+
+
+  bot.register_next_step_handler(
+    message,
+    partial(find_blogger_by_social_media_2_next,
+            df_social_media=df_social_media))
+
+
+def find_blogger_by_social_media_2_next(message, df_social_media):
+  position_social_media = message.text
+  
+  mask = df_social_media.columns.str.contains(position_social_media,
+                                            na=False,
+                                            case=False)
+  
+  filtered_df_socnet_position = df_social_media.loc[:, mask]
+  
+  row_counts = filtered_df_socnet_position.count()
+  total_rows = row_counts.sum()
+
+  markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+  item1 = types.KeyboardButton("Да")
+  item2 = types.KeyboardButton("Нет")
+  item555 = types.KeyboardButton("Вернуться в главное меню")
+  markup.add(item1, item2)
+  markup.add(item555)
+  bot.send_message(
+    message.chat.id, f"Найдено <b>{total_rows}</b> варинтов.\n\nХотите ограничить по цене?", parse_mode='HTML', reply_markup=markup)
+
+
+  
+
+# bot.register_next_step_handler(message, fork_of_functions)
+
 
 
 # Обработчик команды /return
