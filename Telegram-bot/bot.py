@@ -519,8 +519,11 @@ def find_blogger_by_social_media_price_2(message, filtered_df_socnet_position, p
             price = '{:,.0f}'.format(price).replace(',', ' ')
             result_message += "<b>Стоимость</b>: {} рублей\n\n".format(price)
 
-            button1_callback_data = "more_info_{}".format(blogger)
-            button2_callback_data = "more_info_{}".format(blogger)  # Значение для второй кнопки
+            # button1_callback_data = "more_{}".format(blogger)
+            # button2_callback_data = "more_info_{}".format(blogger)  # Значение для второй кнопки
+          button1_callback_data = "more_{}"
+          button2_callback_data = "more_info_{}"  # Значение для второй кнопки
+      
             button1 = types.InlineKeyboardButton(text="Больше о блогере", callback_data=button1_callback_data)
             button2 = types.InlineKeyboardButton(text="Контакты", callback_data=button2_callback_data)
             keyboard.add(button1, button2)
@@ -580,8 +583,9 @@ def find_blogger_by_social_media_all(message, filtered_df_socnet_position, posit
           # Создаем инлайн-клавиатуру для этого результата
           # keyboard.add(types.InlineKeyboardButton(text="Дополнительная информация", callback_data="more_info_{}".format(blogger)))
           # Создаем инлайн-клавиатуру для этого результата
-          button1_callback_data = "info_{}".format(blogger)  # Значение для первой кнопки
-          button2_callback_data = "more_info_{}".format(blogger)  # Значение для второй кнопки
+          button1_callback_data = "info_{}"  # Значение для первой кнопки
+          button2_callback_data = "more_info_{}"
+        # Значение для второй кнопки
           button1 = types.InlineKeyboardButton(text="Больше о блогере", callback_data=button1_callback_data)
           button2 = types.InlineKeyboardButton(text="Контакты", callback_data=button2_callback_data)
           keyboard.add(button1, button2)
