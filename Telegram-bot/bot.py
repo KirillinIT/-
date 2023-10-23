@@ -262,7 +262,7 @@ def filter_data_by_social_network(message, filtered_df):
               not_found_cost_column = False  # Нашли столбец с "стоимость"
 
         if not_found_cost_column:
-          result_message += "  ▶ Размещение не постоянное. Обращайтесь с запросам к менеджерам блогера👇\n"
+          result_message += "  ▶ Размещение не постоянное. Обращайтесь с запросом к менеджерам блогера👇\n"
                   
 
         
@@ -650,3 +650,7 @@ bot.polling(non_stop=True, interval=0)  #запуск бота
 # for col_name in col_names_social_media:
 #     button = types.InlineKeyboardButton(col_name, callback_data=col_name)
 #     markup.add(button)
+
+
+
+
