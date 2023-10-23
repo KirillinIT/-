@@ -218,10 +218,9 @@ def filter_data_by_social_network(message, filtered_df):
             social_network)
 
         # Добавляем информацию о блогере в начале каждой строки
-#        result_message += "<b>Имя блогера</b>: {}\n".format(
-#            row['блогер'].title())
-        result_message += "<b>Имя блогера</b>: {}\n".format(
-          row['блогер'])
+        result_message += "<b>Имя блогера</b>: {}\n".format(str(row['блогер']).title())
+        # result_message += "<b>Имя блогера</b>: {}\n".format(
+        #   row['блогер'])
         # Перебираем столбцы и их значения в текущей строке
         result_message += "\n<b>Общая информация и статистика:</b>\n"
         for column, value in row.items():
@@ -239,16 +238,34 @@ def filter_data_by_social_network(message, filtered_df):
               result_message += "  ▶ <b>{}</b>: {}\n".format(
                   column.capitalize(), value)
 
-          # Добавляем столбцы с словом "стоимость"
+        #   # Добавляем столбцы с словом "стоимость"
+        # result_message += "\n<b>Стоимость рекламных размещений:</b>\n"
+        # for column, value in row.items():
+        #   if 'стоимость' in column and not pd.isna(value):
+        #     column_without_first_word = ' '.join(column.split()[1:])
+        #     if isinstance(value, (int, float)):
+        #       formatted_cost = '{:,.0f}'.format(value).replace(',', ' ')
+        #       result_message += "  ▶ <b>{}</b>: {} рублей\n".format(
+        #           column_without_first_word.capitalize(), formatted_cost)
+        not_found_cost_column = True  # Инициализация флага перед циклом
+
         result_message += "\n<b>Стоимость рекламных размещений:</b>\n"
+        column_without_first_word = ""  # Инициализация переменной
         for column, value in row.items():
-          if 'стоимость' in column and not pd.isna(value):
-            column_without_first_word = ' '.join(column.split()[1:])
-            if isinstance(value, (int, float)):
-              formatted_cost = '{:,.0f}'.format(value).replace(',', ' ')
-              result_message += "  ▶ <b>{}</b>: {} рублей\n".format(
-                  column_without_first_word.capitalize(), formatted_cost)
-              
+          if 'стоимость' in column:
+            if not pd.isna(value):
+              column_without_first_word = ' '.join(column.split()[1:])
+              if isinstance(value, (int, float)):
+                formatted_cost = '{:,.0f}'.format(value).replace(',', ' ')
+                result_message += "  ▶ <b>{}</b>: {} рублей\n".format(
+                    column_without_first_word.capitalize(), formatted_cost)
+              not_found_cost_column = False  # Нашли столбец с "стоимость"
+
+        if not_found_cost_column:
+          result_message += "  ▶ Размещение не постоянное. Обращайтесь с запросам к менеджерам блогера👇\n"
+                  
+
+        
         # Добавляем статистику в конец строки
         for column, value in row.items():
           if 'статистика' in column and not pd.isna(row['статистика']):
@@ -443,7 +460,7 @@ def fork_of_functions_position(message, filtered_df_socnet_position, position_so
   if message.text.lower() == "да":
     find_blogger_by_social_media_price(message, filtered_df_socnet_position, position_social_media)
   elif message.text.lower() == "нет, вывести всех":
-    find_blogger_by_social_media_all(message)
+    find_blogger_by_social_media_all(message, filtered_df_socnet_position, position_social_media)
   elif message.text.lower() == "вернуться в главное меню":
     return_to_main_menu(message)
   else:
@@ -502,34 +519,36 @@ def find_blogger_by_social_media_price_2(message, filtered_df_socnet_position, p
 
     if result_message:
         bot.send_message(message.chat.id, result_message, parse_mode='HTML')
-  
 
 
 
-  # bot.send_message(message.chat.id, result_message, parse_mode='HTML')
 
-def find_blogger_by_social_media_all(message):
+def find_blogger_by_social_media_all(message, filtered_df_socnet_position, position_social_media):
+  result_message = ""
+  for _, row in filtered_df_socnet_position.iterrows():
+#        blogger = row['Блогер'].title()
+      blogger = row['Блогер']
+      price = row[position_social_media]
 
-  markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
-                                     one_time_keyboard=True)
-  item1 = types.KeyboardButton("Найти блогера по имени")
-  # item2 = types.KeyboardButton("Найти блогера по ссылке")
-  # item3 = types.KeyboardButton("Найти блогера по тематике")
-  # item4 = types.KeyboardButton("Найти блогеров по определённым соц. сетям")
-  item5 = types.KeyboardButton("Поиск по определённому виду рекламы")
-  # item6 = types.KeyboardButton("Поиск по определённому бюджету")
-  # item7 = types.KeyboardButton("Добавить блогера в бота")
-  markup.add(item1)
-  # markup.add(item2)
-  # markup.add(item3)
-  # markup.add(item4)
-  markup.add(item5)
-  # markup.add(item6)
-  # markup.add(item7)
-  
-  bot.send_message(message.chat.id,
-                   "Данная кнопка на данный момент не запущена. Продолжите пользоваться нашим ботом с помощью кнопок ниже",
-                   reply_markup=markup)
+      if not pd.isna(price):
+          result_message += "<b>Имя блогера</b>: {}\n".format(str(blogger).title())
+          price = '{:,.0f}'.format(price).replace(',', ' ')
+          result_message += "<b>Стоимость</b>: {} рублей\n\n".format(price)
+
+  if result_message:
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    item555 = types.KeyboardButton("Вернуться в главное меню")
+    markup.add(item555)
+      # bot.send_message(message.chat.id, result_message, parse_mode='HTML')
+    max_message_length = 4000  # Максимальная длина сообщения в Telegram
+    result_message += "\n\n"
+    for i in range(0, len(result_message), max_message_length):
+      bot.send_message(message.chat.id,
+                       result_message[i:i + max_message_length],
+                       parse_mode='HTML',
+                       reply_markup=markup)
+
+
 
 
 
