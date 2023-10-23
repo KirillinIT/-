@@ -513,44 +513,90 @@ def find_blogger_by_social_media_price_2(message, filtered_df_socnet_position, p
         price = row[position_social_media]
 
         if not pd.isna(price):
-            result_message += "<b>Имя блогера</b>: {}\n".format(blogger)
+          # Создаем инлайн-клавиатуру для каждого вывода
+            keyboard = types.InlineKeyboardMarkup()
+            result_message += "<b>Имя блогера</b>: {}\n".format(str(blogger).title())
             price = '{:,.0f}'.format(price).replace(',', ' ')
             result_message += "<b>Стоимость</b>: {} рублей\n\n".format(price)
 
-    if result_message:
-        bot.send_message(message.chat.id, result_message, parse_mode='HTML')
+            button1_callback_data = "more_info_{}".format(blogger)
+            button2_callback_data = "more_info_{}".format(blogger)  # Значение для второй кнопки
+            button1 = types.InlineKeyboardButton(text="Больше о блогере", callback_data=button1_callback_data)
+            button2 = types.InlineKeyboardButton(text="Контакты", callback_data=button2_callback_data)
+            keyboard.add(button1, button2)
+    
+    
+            # Отправляем сообщение с инлайн-клавиатурой
+            bot.send_message(message.chat.id, result_message, parse_mode='HTML', reply_markup=keyboard)
+    
+    # Создаем клавиатуру с одной кнопкой снизу
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    item555 = types.KeyboardButton("Вернуться в главное меню")
+    markup.add(item555)
+    
+    # Отправляем клавиатуру снизу
+    bot.send_message(message.chat.id, '\nПо каждому блогеру вы можете загрузить отдельную информацию с помощью кнопок под сообщением или вернутесь в главное меню с помощью кнопки ниже\n', reply_markup=markup)
+
+    # if result_message:
+    #   bot.send_message(message.chat.id, result_message, parse_mode='HTML')
 
 
+# def find_blogger_by_social_media_all(message, filtered_df_socnet_position, position_social_media):
+#   result_message = ""
+#   for _, row in filtered_df_socnet_position.iterrows():
+# #        blogger = row['Блогер'].title()
+#       blogger = row['Блогер']
+#       price = row[position_social_media]
 
+#       if not pd.isna(price):
+#           result_message += "<b>Имя блогера</b>: {}\n".format(str(blogger).title())
+#           price = '{:,.0f}'.format(price).replace(',', ' ')
+#           result_message += "<b>Стоимость</b>: {} рублей\n\n".format(price)
+
+#   if result_message:
+#     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+#     item555 = types.KeyboardButton("Вернуться в главное меню")
+#     markup.add(item555)
+#       # bot.send_message(message.chat.id, result_message, parse_mode='HTML')
+#     max_message_length = 4000  # Максимальная длина сообщения в Telegram
+#     result_message += "\n\n"
+#     for i in range(0, len(result_message), max_message_length):
+#       bot.send_message(message.chat.id,
+#                        result_message[i:i + max_message_length],
+#                        parse_mode='HTML',
+#                        reply_markup=markup)
 
 def find_blogger_by_social_media_all(message, filtered_df_socnet_position, position_social_media):
-  result_message = ""
   for _, row in filtered_df_socnet_position.iterrows():
-#        blogger = row['Блогер'].title()
       blogger = row['Блогер']
       price = row[position_social_media]
 
       if not pd.isna(price):
-          result_message += "<b>Имя блогера</b>: {}\n".format(str(blogger).title())
+          keyboard = types.InlineKeyboardMarkup()
+          result_message = "<b>Имя блогера</b>: {}\n".format(str(blogger).title())
           price = '{:,.0f}'.format(price).replace(',', ' ')
           result_message += "<b>Стоимость</b>: {} рублей\n\n".format(price)
 
-  if result_message:
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    item555 = types.KeyboardButton("Вернуться в главное меню")
-    markup.add(item555)
-      # bot.send_message(message.chat.id, result_message, parse_mode='HTML')
-    max_message_length = 4000  # Максимальная длина сообщения в Telegram
-    result_message += "\n\n"
-    for i in range(0, len(result_message), max_message_length):
-      bot.send_message(message.chat.id,
-                       result_message[i:i + max_message_length],
-                       parse_mode='HTML',
-                       reply_markup=markup)
+          # Создаем инлайн-клавиатуру для этого результата
+          # keyboard.add(types.InlineKeyboardButton(text="Дополнительная информация", callback_data="more_info_{}".format(blogger)))
+          # Создаем инлайн-клавиатуру для этого результата
+          button1_callback_data = "info_{}".format(blogger)  # Значение для первой кнопки
+          button2_callback_data = "more_info_{}".format(blogger)  # Значение для второй кнопки
+          button1 = types.InlineKeyboardButton(text="Больше о блогере", callback_data=button1_callback_data)
+          button2 = types.InlineKeyboardButton(text="Контакты", callback_data=button2_callback_data)
+          keyboard.add(button1, button2)
 
 
+          # Отправляем сообщение с инлайн-клавиатурой
+          bot.send_message(message.chat.id, result_message, parse_mode='HTML', reply_markup=keyboard)
 
+  # Создаем клавиатуру с одной кнопкой снизу
+  markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+  item555 = types.KeyboardButton("Вернуться в главное меню")
+  markup.add(item555)
 
+  # Отправляем клавиатуру снизу
+  bot.send_message(message.chat.id, '\nПо каждому блогеру вы можете загрузить отдельную информацию с помощью кнопок под сообщением или вернутесь в главное меню с помощью кнопки ниже\n', reply_markup=markup)
 
 
 # Обработчик команды /return
