@@ -20,15 +20,15 @@ bot = telebot.TeleBot(token)
 @bot.message_handler(commands=["start"])
 def start(message):
   markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-  item1 = types.KeyboardButton("Найти блогера по имени")
-  # item2 = types.KeyboardButton("Найти блогера по ссылке")
+  item1 = types.KeyboardButton('Найти блогера по имени')
+  item2 = types.KeyboardButton('Найти блогера по ссылке')
   # item3 = types.KeyboardButton("Найти блогера по тематике")
   # item4 = types.KeyboardButton("Найти блогеров по определённым соц. сетям")
-  item5 = types.KeyboardButton("Поиск по определённому виду рекламы")
+  item5 = types.KeyboardButton('Поиск по определённому виду рекламы')
   # item6 = types.KeyboardButton("Поиск по определённому бюджету")
   # item7 = types.KeyboardButton("Добавить блогера в бота")
   markup.add(item1)
-  # markup.add(item2)
+  markup.add(item2)
   # markup.add(item3)
   # markup.add(item4)
   markup.add(item5)
@@ -71,8 +71,6 @@ def search_blogger(message=None, blogger_name_def=None):
   global current_blogger_name  # Используем глобальную переменную
   if message.text.lower() == "вернуться в главное меню":
     return_to_main_menu(message)
-    
-
   else:
     # Получаем введенное имя блогера от пользователя
     blogger_name = message.text.lower()
@@ -585,12 +583,47 @@ def find_blogger_by_social_media_all(message, filtered_df_socnet_position, posit
   bot.send_message(message.chat.id, '\nПо каждому блогеру вы можете загрузить отдельную информацию с помощью кнопок под сообщением или вернутесь в главное меню с помощью кнопки ниже\n', reply_markup=markup)
 
 
+###############################################################################
+################### Кнопка "Найти блогера по ссылке" ##########################
+###############################################################################
+
+@bot.message_handler(func=lambda message: message.text == 'Найти блогера по ссылке')
+def find_blogger_by_href(message):
+
+  markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+  item = types.KeyboardButton("Вернуться в главное меню")
+  markup.add(item)
+
+  bot.send_message(
+      message.chat.id,
+      "{0.first_name}, отправьте мне ссылку на блогера.\n\nНе рекомендуем искать Youtube-блогеров, так как у данной площадки может быть несколько ссылок на одного и того же блогера.\n\nЧтобы вернуться в главное меню, нажмите кнопку ниже.".format(message.from_user), reply_markup=markup)
+  
+  bot.register_next_step_handler(message, find_blogger_by_href_with_href)
+
+
+def find_blogger_by_href_with_href(message):
+  if message.text.lower() == "вернуться в главное меню":
+    return_to_main_menu(message)
+  else:
+    # Получаем введенную ссылку на блогера от пользователя
+    blogger_href = message.text.lower()
+    filtered_df = df[df.applymap(lambda x: isinstance(x, str) and 'ссылка' in x.lower()).any(axis=1)]
+
+
+###############################################################################
+####################### Функция для инлайн-кнопки #############################
+###############################################################################
+
 @bot.callback_query_handler(func=lambda call: call.data.startswith('more_'))
 def handle_more_button(call):
     message = call.message
     search_blogger(message)
 
-# Обработчик команды /return
+
+###############################################################################
+###################### Обработчик команды /return #############################
+###############################################################################
+
 @bot.message_handler(
     func=lambda message: message.text.lower() == "вернуться в главное меню")
 @bot.message_handler(commands=["return"])
@@ -598,15 +631,15 @@ def return_to_main_menu(message):
 
   markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
                                      one_time_keyboard=True)
-  item1 = types.KeyboardButton("Найти блогера по имени")
-  # item2 = types.KeyboardButton("Найти блогера по ссылке")
+  item1 = types.KeyboardButton('Найти блогера по имени')
+  item2 = types.KeyboardButton('Найти блогера по ссылке')
   # item3 = types.KeyboardButton("Найти блогера по тематике")
   # item4 = types.KeyboardButton("Найти блогеров по определённым соц. сетям")
-  item5 = types.KeyboardButton("Поиск по определённому виду рекламы")
+  item5 = types.KeyboardButton('Поиск по определённому виду рекламы')
   # item6 = types.KeyboardButton("Поиск по определённому бюджету")
   # item7 = types.KeyboardButton("Добавить блогера в бота")
   markup.add(item1)
-  # markup.add(item2)
+  markup.add(item2)
   # markup.add(item3)
   # markup.add(item4)
   markup.add(item5)
