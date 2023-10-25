@@ -66,18 +66,20 @@ def find_blogger_by_name(message):
 # Глобальная переменная для хранения имени блогера
 current_blogger_name = None
 
-
 #Функция для поиска блогера в DataFrame
-def search_blogger(message):
+def search_blogger(message=None, blogger_name_def=None):
   global current_blogger_name  # Используем глобальную переменную
-
   if message.text.lower() == "вернуться в главное меню":
     return_to_main_menu(message)
+    
 
   else:
     # Получаем введенное имя блогера от пользователя
     blogger_name = message.text.lower()
     current_blogger_name = message
+    # bot.send_message(message.chat.id, f'{blogger_name}')
+    blogger_name = blogger_name.split("\nстоимость:")[0]
+    blogger_name = blogger_name.replace('имя блогера: ', '')
 
     # Ищем блогера в DataFrame
     filtered_df = df[df['блогер'].str.contains(blogger_name, na=False)]
@@ -395,8 +397,9 @@ def find_blogger_by_social_media_next(message):
   
     # Оставляем только столбцы, содержащие "стоимость"
     # df_social_media = df_social_media.filter(like='стоимость', axis=1)
-    df_social_media = df_social_media.loc[:, df_social_media.columns.str.contains('стоимость|блогер', case=False, na=False)]
-  
+    # df_social_media = df_social_media.loc[:, df_social_media.columns.str.contains('стоимость|блогер', case=False, na=False)]
+    df_social_media = df_social_media.loc[:, df_social_media.columns.str.contains('стоимость|блогер', case=False, na=False) & ~df_social_media.columns.str.contains('охват', case=False, na=False)]
+
   
     df_social_media = df_social_media.rename(
         columns=lambda x: x.replace(f'{social_media} ', ''))
@@ -505,8 +508,9 @@ def find_blogger_by_social_media_price_2(message, filtered_df_socnet_position, p
                      f"Найдено варинтов: <b>{total_rows}</b>.",
                      parse_mode='HTML')
   
-    result_message = ""
+    
     for _, row in filtered_df_socnet_position_price.iterrows():
+        result_message = ""
 #        blogger = row['Блогер'].title()
         blogger = row['Блогер']
 
@@ -519,14 +523,15 @@ def find_blogger_by_social_media_price_2(message, filtered_df_socnet_position, p
             price = '{:,.0f}'.format(price).replace(',', ' ')
             result_message += "<b>Стоимость</b>: {} рублей\n\n".format(price)
 
-            # button1_callback_data = "more_{}".format(blogger)
-            # button2_callback_data = "more_info_{}".format(blogger)  # Значение для второй кнопки
-          button1_callback_data = "more_{}"
-          button2_callback_data = "more_info_{}"  # Значение для второй кнопки
+            blogger_name_def = blogger
+            blogger_name_def = re.sub('<.*?>', '', blogger_name_def)
+            button1_callback_data = f"more_{blogger_name_def}"
+            # button2_callback_data = "more_info_"  # Значение для второй кнопки
       
             button1 = types.InlineKeyboardButton(text="Больше о блогере", callback_data=button1_callback_data)
-            button2 = types.InlineKeyboardButton(text="Контакты", callback_data=button2_callback_data)
-            keyboard.add(button1, button2)
+            # button2 = types.InlineKeyboardButton(text="Контакты", callback_data=button2_callback_data)
+            # keyboard.add(button1, button2)
+            keyboard.add(button1)
     
     
             # Отправляем сообщение с инлайн-клавиатурой
@@ -539,35 +544,8 @@ def find_blogger_by_social_media_price_2(message, filtered_df_socnet_position, p
     
     # Отправляем клавиатуру снизу
     bot.send_message(message.chat.id, '\nПо каждому блогеру вы можете загрузить отдельную информацию с помощью кнопок под сообщением или вернутесь в главное меню с помощью кнопки ниже\n', reply_markup=markup)
+    bot.send_message(message.chat.id,f'{blogger}', reply_markup=markup)
 
-    # if result_message:
-    #   bot.send_message(message.chat.id, result_message, parse_mode='HTML')
-
-
-# def find_blogger_by_social_media_all(message, filtered_df_socnet_position, position_social_media):
-#   result_message = ""
-#   for _, row in filtered_df_socnet_position.iterrows():
-# #        blogger = row['Блогер'].title()
-#       blogger = row['Блогер']
-#       price = row[position_social_media]
-
-#       if not pd.isna(price):
-#           result_message += "<b>Имя блогера</b>: {}\n".format(str(blogger).title())
-#           price = '{:,.0f}'.format(price).replace(',', ' ')
-#           result_message += "<b>Стоимость</b>: {} рублей\n\n".format(price)
-
-#   if result_message:
-#     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-#     item555 = types.KeyboardButton("Вернуться в главное меню")
-#     markup.add(item555)
-#       # bot.send_message(message.chat.id, result_message, parse_mode='HTML')
-#     max_message_length = 4000  # Максимальная длина сообщения в Telegram
-#     result_message += "\n\n"
-#     for i in range(0, len(result_message), max_message_length):
-#       bot.send_message(message.chat.id,
-#                        result_message[i:i + max_message_length],
-#                        parse_mode='HTML',
-#                        reply_markup=markup)
 
 def find_blogger_by_social_media_all(message, filtered_df_socnet_position, position_social_media):
   for _, row in filtered_df_socnet_position.iterrows():
@@ -583,13 +561,17 @@ def find_blogger_by_social_media_all(message, filtered_df_socnet_position, posit
           # Создаем инлайн-клавиатуру для этого результата
           # keyboard.add(types.InlineKeyboardButton(text="Дополнительная информация", callback_data="more_info_{}".format(blogger)))
           # Создаем инлайн-клавиатуру для этого результата
-          button1_callback_data = "info_{}"  # Значение для первой кнопки
-          button2_callback_data = "more_info_{}"
+
+          blogger_name_def = blogger
+          blogger_name_def = re.sub('<.*?>', '', blogger_name_def)
+          button1_callback_data = f"more_{blogger_name_def}"
+          # button2_callback_data = "more_info_{}"
         # Значение для второй кнопки
           button1 = types.InlineKeyboardButton(text="Больше о блогере", callback_data=button1_callback_data)
-          button2 = types.InlineKeyboardButton(text="Контакты", callback_data=button2_callback_data)
-          keyboard.add(button1, button2)
+          # button2 = types.InlineKeyboardButton(text="Контакты", callback_data=button2_callback_data)
+          # keyboard.add(button1, button2)
 
+          keyboard.add(button1)
 
           # Отправляем сообщение с инлайн-клавиатурой
           bot.send_message(message.chat.id, result_message, parse_mode='HTML', reply_markup=keyboard)
@@ -602,6 +584,11 @@ def find_blogger_by_social_media_all(message, filtered_df_socnet_position, posit
   # Отправляем клавиатуру снизу
   bot.send_message(message.chat.id, '\nПо каждому блогеру вы можете загрузить отдельную информацию с помощью кнопок под сообщением или вернутесь в главное меню с помощью кнопки ниже\n', reply_markup=markup)
 
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('more_'))
+def handle_more_button(call):
+    message = call.message
+    search_blogger(message)
 
 # Обработчик команды /return
 @bot.message_handler(
@@ -650,7 +637,3 @@ bot.polling(non_stop=True, interval=0)  #запуск бота
 # for col_name in col_names_social_media:
 #     button = types.InlineKeyboardButton(col_name, callback_data=col_name)
 #     markup.add(button)
-
-
-
-
