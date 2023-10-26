@@ -362,7 +362,7 @@ def find_blogger_by_social_media(message):
     item15 = types.KeyboardButton("Likee")
     item16 = types.KeyboardButton("Yappy")
 
-    item17 = types.KeyboardButton("Подкасты")
+    item17 = types.KeyboardButton("Подкаст")
     item18 = types.KeyboardButton("Вернуться в главное меню")
 
     markup.add(item1, item2)
@@ -391,6 +391,11 @@ def find_blogger_by_social_media_next(message):
     return_to_main_menu(message)
   else:
     social_media = message.text
+    if social_media == 'Группы в VK':
+      social_media = 'VK группа'
+    elif social_media == 'Личные страницы в VK':
+      social_media = 'VK личная страница'
+    
     df_social_media = df.filter(like=social_media, axis=1)
   
     # Оставляем только столбцы, содержащие "стоимость"
@@ -411,8 +416,9 @@ def find_blogger_by_social_media_next(message):
   
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     for item in col_names_social_media:
-      button = types.KeyboardButton(item)
-      markup.add(button)
+      if item.lower() != 'блогер':
+        button = types.KeyboardButton(item)
+        markup.add(button)
   
     item555 = types.KeyboardButton("Вернуться в главное меню")
     markup.add(item555)
