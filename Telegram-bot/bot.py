@@ -118,46 +118,6 @@ def search_blogger(message=None, blogger_name_def=None):
         markup.add(button)
       item555 = types.KeyboardButton("Вернуться в главное меню")
       markup.add(item555)
-      # Задаем вопрос о социальных сетях и создаем клавиатуру
-      # markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-      # item1 = types.KeyboardButton("Telegram")
-      # item2 = types.KeyboardButton("Instagram")
-
-      # item3 = types.KeyboardButton("Группы в VK")
-      # item4 = types.KeyboardButton("Личные страницы в VK")
-      # item5 = types.KeyboardButton("VK Видео")
-
-      # item6 = types.KeyboardButton("YouTube")
-      # item7 = types.KeyboardButton("RuTube")
-
-      # item8 = types.KeyboardButton("Дзен")
-      # item9 = types.KeyboardButton("Дзен Шоу")
-
-      # item10 = types.KeyboardButton("Одноклассники")
-      # item11 = types.KeyboardButton("OK Шоу")
-
-      # item12 = types.KeyboardButton("Twitch")
-
-      # item13 = types.KeyboardButton("TikTok")
-
-      # item14 = types.KeyboardButton("Threads")
-      # item15 = types.KeyboardButton("Likee")
-      # item16 = types.KeyboardButton("Yappy")
-
-      # item17 = types.KeyboardButton("Подкасты")
-      # item18 = types.KeyboardButton("Вернуться в главное меню")
-
-      # markup.add(item1, item2)
-      # markup.add(item3, item4, item5)
-      # markup.add(item6)
-      # markup.add(item7)
-      # markup.add(item8, item9)
-      # markup.add(item10, item11)
-      # markup.add(item12)
-      # markup.add(item13)
-      # markup.add(item14, item15, item16)
-      # markup.add(item17)
-      # markup.add(item18)
 
       bot.send_message(
           message.chat.id,
@@ -609,11 +569,34 @@ def find_blogger_by_href(message):
 
 def find_blogger_by_href_with_href(message):
   if message.text.lower() == "вернуться в главное меню":
-    return_to_main_menu(message)
+      return_to_main_menu(message)
   else:
-    # Получаем введенную ссылку на блогера от пользователя
-    blogger_href = message.text.lower()
-    filtered_df = df[df.applymap(lambda x: isinstance(x, str) and 'ссылка' in x.lower()).any(axis=1)]
+      # Получаем введенную ссылку на блогера от пользователя
+      blogger_href = message.text.lower()
+
+      # Отладочное сообщение для проверки ввода пользователя
+      print("Полученный blogger_href:", blogger_href)
+
+      # Ищем blogger_href во всех столбцах, содержащих слово "ссылка"
+      keyword = 'ссылка'
+      columns_with_link = [col for col in df.columns if keyword in col.lower()]
+  
+      filtered_df = df[df[columns_with_link].apply(lambda col: col.astype(str).str.contains(blogger_href, case=False, na=False)).any(axis=1)]
+
+      # Отладочное сообщение для проверки размера filtered_df
+      print("Размер filtered_df:", filtered_df.shape)
+
+      if not filtered_df.empty:
+          markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+          item = types.KeyboardButton("Вернуться в главное меню")
+          markup.add(item)
+
+          bot.send_message(message.chat.id,
+              "Мы нашли данного блогера",
+              reply_markup=markup)
+
+
+      
 
 
 ###############################################################################
@@ -624,6 +607,7 @@ def find_blogger_by_href_with_href(message):
 def handle_more_button(call):
     message = call.message
     search_blogger(message)
+
 
 
 ###############################################################################
@@ -659,20 +643,3 @@ def return_to_main_menu(message):
 
 keep_alive()  #запускаем flask-сервер в отдельном потоке.
 bot.polling(non_stop=True, interval=0)  #запуск бота
-
-# Черновик
-# КОД ДЛЯ ДИНАМИЧЕСКИХ КНОПОК
-# col_names_social_media = [re.sub(r'\(.*\)', '', item) for item in col_names_social_media]
-# col_names_social_media = [item.replace('Телеграм', 'Тг') for item in col_names_social_media]
-# col_names_social_media = [item.replace('Инстаграм', 'Инст') for item in col_names_social_media]
-# col_names_social_media = [item[:18] + '...' if len(item) > 21 else item for item in col_names_social_media]
-
-# invalid_characters = ['@', '#', '$', '%', '&', '*', ' ']
-# cleaned_col_names = [re.sub('|'.join(map(re.escape, invalid_characters)), '', col_name) for col_name in col_names_social_media]
-
-# bot.send_message(message.chat.id, f"Выберите опцию{col_names_social_media}:")
-# # Создаем инлайн-клавиатуру с кнопками на основе столбцов
-# markup = types.InlineKeyboardMarkup(row_width=1)
-# for col_name in col_names_social_media:
-#     button = types.InlineKeyboardButton(col_name, callback_data=col_name)
-#     markup.add(button)
