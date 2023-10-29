@@ -223,9 +223,9 @@ def filter_data_by_social_network(message, filtered_df):
 
         if not_found_cost_column:
           result_message += "  ▶ Размещение не постоянное. Обращайтесь с запросом к менеджерам блогера👇\n"
-                  
 
-        
+
+
         # Добавляем статистику в конец строки
         for column, value in row.items():
           if 'статистика' in column and not pd.isna(row['статистика']):
@@ -355,53 +355,53 @@ def find_blogger_by_social_media_next(message):
       social_media = 'VK группа'
     elif social_media == 'Личные страницы в VK':
       social_media = 'VK личная страница'
-    
+
     df_social_media = df.filter(like=social_media, axis=1)
-  
+
     # Оставляем только столбцы, содержащие "стоимость"
     # df_social_media = df_social_media.filter(like='стоимость', axis=1)
     # df_social_media = df_social_media.loc[:, df_social_media.columns.str.contains('стоимость|блогер', case=False, na=False)]
     df_social_media = df_social_media.loc[:, df_social_media.columns.str.contains('стоимость|блогер', case=False, na=False) & ~df_social_media.columns.str.contains('охват', case=False, na=False)]
 
-  
+
     df_social_media = df_social_media.rename(
         columns=lambda x: x.replace(f'{social_media} ', ''))
     df_social_media.columns = df_social_media.columns.str.replace(
         'стоимость ', '')
-  
+
     df_social_media.columns = df_social_media.columns.str.capitalize()
     df_social_media = df_social_media.loc[:, ~df_social_media.columns.str.
                                           contains('охват', na=False)]
     col_names_social_media = list(df_social_media.columns)
-  
+
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     for item in col_names_social_media:
       if item.lower() != 'блогер':
         button = types.KeyboardButton(item)
         markup.add(button)
-  
+
     item555 = types.KeyboardButton("Вернуться в главное меню")
     markup.add(item555)
-  
+
     # Отправляем сообщение с клавиатурой
     bot.send_message(message.chat.id, "Выберите опцию:", reply_markup=markup)
-  
+
     bot.register_next_step_handler(
         message,
         partial(find_blogger_by_social_media_2_next,
                 df_social_media=df_social_media))
-  
+
 def find_blogger_by_social_media_2_next(message, df_social_media):
   if message.text.lower() == "вернуться в главное меню":
     return_to_main_menu(message)
   else:
     position_social_media = message.text
-  
+
     filtered_df_socnet_position = df_social_media[['Блогер', position_social_media]]
-  
+
     row_counts = filtered_df_socnet_position[position_social_media].count()
     total_rows = row_counts.sum()
-  
+
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     item1 = types.KeyboardButton("Да")
     item2 = types.KeyboardButton("Нет, вывести всех")
@@ -413,9 +413,9 @@ def find_blogger_by_social_media_2_next(message, df_social_media):
         f"Найдено <b>{total_rows}</b> варинтов.\n\nХотите ограничить по цене?",
         parse_mode='HTML',
         reply_markup=markup)
-  
+
     # bot.register_next_step_handler(message, fork_of_functions_position)
-  
+
     bot.register_next_step_handler(
       message,
       partial(fork_of_functions_position,
@@ -461,18 +461,18 @@ def find_blogger_by_social_media_price_2(message, filtered_df_socnet_position, p
     mask = (filtered_df_socnet_position['Блогер'].notna()) & (filtered_df_socnet_position[position_social_media] <= price)
     filtered_df_socnet_position_price = filtered_df_socnet_position[mask].copy()
 
-  
+
 
     # 'filtered_df' содержит только столбцы, удовлетворяющие условию
-  
+
     # row_counts = filtered_df_socnet_position_price.count()
     # total_rows = row_counts.sum()
     total_rows = mask.sum()
     bot.send_message(message.chat.id,
                      f"Найдено варинтов: <b>{total_rows}</b>.",
                      parse_mode='HTML')
-  
-    
+
+
     for _, row in filtered_df_socnet_position_price.iterrows():
         result_message = ""
 #        blogger = row['Блогер'].title()
@@ -491,21 +491,21 @@ def find_blogger_by_social_media_price_2(message, filtered_df_socnet_position, p
             blogger_name_def = re.sub('<.*?>', '', blogger_name_def)
             button1_callback_data = f"more_{blogger_name_def}"
             # button2_callback_data = "more_info_"  # Значение для второй кнопки
-      
+
             button1 = types.InlineKeyboardButton(text="Больше о блогере", callback_data=button1_callback_data)
             # button2 = types.InlineKeyboardButton(text="Контакты", callback_data=button2_callback_data)
             # keyboard.add(button1, button2)
             keyboard.add(button1)
-    
-    
+
+
             # Отправляем сообщение с инлайн-клавиатурой
             bot.send_message(message.chat.id, result_message, parse_mode='HTML', reply_markup=keyboard)
-    
+
     # Создаем клавиатуру с одной кнопкой снизу
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     item555 = types.KeyboardButton("Вернуться в главное меню")
     markup.add(item555)
-    
+
     # Отправляем клавиатуру снизу
     bot.send_message(message.chat.id, '\nПо каждому блогеру вы можете загрузить отдельную информацию с помощью кнопок под сообщением или вернутесь в главное меню с помощью кнопки ниже\n', reply_markup=markup)
     bot.send_message(message.chat.id,f'{blogger}', reply_markup=markup)
@@ -563,7 +563,7 @@ def find_blogger_by_href(message):
   bot.send_message(
       message.chat.id,
       "{0.first_name}, отправьте мне ссылку на блогера.\n\nНе рекомендуем искать Youtube-блогеров, так как у данной площадки может быть несколько ссылок на одного и того же блогера.\n\nЧтобы вернуться в главное меню, нажмите кнопку ниже.".format(message.from_user), reply_markup=markup)
-  
+
   bot.register_next_step_handler(message, find_blogger_by_href_with_href)
 
 
@@ -580,28 +580,34 @@ def find_blogger_by_href_with_href(message):
       # Ищем blogger_href во всех столбцах, содержащих слово "ссылка"
       keyword = 'ссылка'
       columns_with_link = [col for col in df.columns if keyword in col.lower()]
-  
+
       filtered_df_href_sample = df[df[columns_with_link].apply(lambda col: col.astype(str).str.contains(blogger_href, case=False, na=False)).any(axis=1)]
 
       filtered_df_href = df[df.apply(lambda col: col.astype(str).str.contains(blogger_href, case=False, na=False)).any(axis=1)]
 
-      # social_network = ['Telegram', 'Instagram', 'VK группа', 'VK личная страница', 'VK Видео', 'YouTube', 'RuTube', 'Дзен', 'Дзен Шоу', 'Одноклассники', 'OK Шоу', 'Twitch', 'TikTok', 'Threads', 'Likee', 'Yappy', 'Подкаст']
+      social_network = ['Telegram', 'Instagram', 'VK группа', 'VK личная страница', 'VK Видео', 'YouTube', 'RuTube', 'Дзен', 'Дзен Шоу', 'Одноклассники', 'OK Шоу', 'Twitch', 'TikTok', 'Threads', 'Likee', 'Yappy', 'Подкаст']
+  
+      found_networks = []  # Создаем список для найденных социальных сетей
+
+      for network in social_network:
+        if network.lower() in blogger_href:
+            found_networks.append(network)
 
 
-      # # Создаем столбец 'найденный_столбец'
-      # filtered_df_href_sample['найденный_столбец'] = ''
-      
-      # # Ищем blogger_href во всех столбцах
-      # for column in columns_with_link:
-      #   mask = filtered_df_href_sample[column].astype(str).str.contains(blogger_href, case=False, na=False)
-      #   filtered_df_href_sample['найденный_столбец'] = np.where(mask, column, filtered_df_href_sample['найденный_столбец'])
-      
-      # # Фильтруем по социальным сетям
-      #   filtered_df_social_network = filtered_df_href[filtered_df_href['найденный_столбец'].isin(social_network)]
 
-      # # Отладочное сообщение для проверки размера filtered_df
-      # print("Размер filtered_df:", filtered_df_social_network.shape)
+      relevant_columns = [col for col in filtered_df_href.columns if any(network in col for network in found_networks) or col.strip().lower() == 'блогер' or col.strip().lower() == 'налог' or col.strip().lower() == 'контакты менеджера']
+ 
 
+      if relevant_columns:
+        filtered_df_href = filtered_df_href[relevant_columns]
+
+      for network in found_networks:
+        filtered_df_href = filtered_df_href.rename(columns=lambda x: x.replace(f'{network} ', ''))
+
+      filtered_df_href.columns = [col.lower() for col in filtered_df_href.columns]
+
+
+    
       if not filtered_df_href_sample.empty:
           markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
           item = types.KeyboardButton("Вернуться в главное меню")
@@ -613,13 +619,13 @@ def find_blogger_by_href_with_href(message):
 
           keyboard_data_social_network = types.ReplyKeyboardMarkup(
               one_time_keyboard=True)
-          item1 = types.KeyboardButton('Найти другие соц.сети блогера')
+          # item1 = types.KeyboardButton('Найти другие соц.сети блогера')
           item2 = types.KeyboardButton('Вернуться в главное меню')
-          keyboard_data_social_network.add(item1)
+          # keyboard_data_social_network.add(item1)
           keyboard_data_social_network.add(item2)
-      
+
           result_message = ""  # Инициализируем result_message
-      
+
           for index, row in filtered_df_href.iterrows():
             # Проверяем, что текущая строка не пуста
             if not row.isnull().all():              
@@ -634,7 +640,7 @@ def find_blogger_by_href_with_href(message):
                 # if not pd.isna(value) and column != 'тематика' and column != 'блогер' and column != 'статистика' and column != 'стоимость':
                 if not pd.isna(
                     value
-                ) and column != 'тематика' and column != 'блогер' and column != 'статистика' and 'стоимость' not in column:
+                ) and column != 'тематика' and column != 'блогер' and column != 'статистика' and column != 'стоимость' and column != 'налог' and 'контакты менеджера' not in column:
                   # Если значение - число, форматируем его с использованием пробела вместо запятой
                   if isinstance(value, (int, float)):
                     formatted_value = '{:,.0f}'.format(value).replace(',', ' ')
@@ -645,7 +651,7 @@ def find_blogger_by_href_with_href(message):
                         column.capitalize(), value)
 
               not_found_cost_column = True  # Инициализация флага перед циклом
-      
+
               result_message += "\n<b>Стоимость рекламных размещений:</b>\n"
               column_without_first_word = ""  # Инициализация переменной
               for column, value in row.items():
@@ -657,10 +663,10 @@ def find_blogger_by_href_with_href(message):
                       result_message += "  ▶ <b>{}</b>: {} рублей\n".format(
                           column_without_first_word.capitalize(), formatted_cost)
                     not_found_cost_column = False  # Нашли столбец с "стоимость"
-      
+
               if not_found_cost_column:
                 result_message += "  ▶ Размещение не постоянное. Обращайтесь с запросом к менеджерам блогера👇\n"
-    
+
               # Добавляем статистику в конец строки
               # for column, value in row.items():
               #   if 'статистика' in column and not pd.isna(row['статистика']):
@@ -668,8 +674,8 @@ def find_blogger_by_href_with_href(message):
               #         row['статистика'])
               #   else:
               #     result_message += "\n<b>Статистика:</b> не найдена"
-                  
-      
+
+
               max_message_length = 4000  # Максимальная длина сообщения в Telegram
               result_message += "\n\n"
               for i in range(0, len(result_message), max_message_length):
@@ -677,14 +683,14 @@ def find_blogger_by_href_with_href(message):
                                  result_message[i:i + max_message_length],
                                  parse_mode='HTML',
                                  reply_markup=keyboard_data_social_network)
-      
+
           result_message = ""
           tax_value = filtered_df_href.get('налог')
           # Если серия не равна None и не пустая, то берем первый элемент (значение)
           if tax_value is not None and not tax_value.empty:
             tax_value = tax_value.values[0]
             result_message += "<b>✂️💵 Налог</b>: {}\n".format(tax_value)
-      
+
           manager_contacts = filtered_df_href.get('контакты менеджера')
           # Если серия не равна None и не пустая, то берем первый элемент (значение)
           if manager_contacts is not None and not manager_contacts.empty:
@@ -694,26 +700,26 @@ def find_blogger_by_href_with_href(message):
               manager_contacts = manager_contacts.values[0]
             result_message += "<b>☎ Контакты менеджера</b>: {}\n".format(
                 manager_contacts)
-      
+
           bot.send_message(
               message.chat.id,
               result_message,
               parse_mode='HTML',
           )
-    
+
       else:
           markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-          item1 = types.KeyboardButton("Попробовать другую ссылку")
+          # item1 = types.KeyboardButton("Попробовать другую ссылку")
           item2 = types.KeyboardButton("Вернуться в главное меню")
-          markup.add(item1)
+          # markup.add(item1)
           markup.add(item2)
           bot.send_message(
               message.chat.id,
               "{0.first_name}, мы не нашли данного блогера в нашей базе.\n\nВы можете попробовать ввести другую ссылку с помощью кнопки 'Попробовать другую ссылку'. \n\nЧтобы вернуться в главное меню, нажмите кнопку ниже.".format(message.from_user), reply_markup=markup)
-        
 
 
-      
+
+
 
 
 ###############################################################################
