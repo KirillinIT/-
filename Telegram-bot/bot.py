@@ -593,8 +593,6 @@ def find_blogger_by_href_with_href(message):
         if network.lower() in blogger_href:
             found_networks.append(network)
 
-
-
       relevant_columns = [col for col in filtered_df_href.columns if any(network in col for network in found_networks) or col.strip().lower() == 'блогер' or col.strip().lower() == 'налог' or col.strip().lower() == 'контакты менеджера']
  
 
@@ -635,12 +633,13 @@ def find_blogger_by_href_with_href(message):
               #   row['блогер'])
               # Перебираем столбцы и их значения в текущей строке
               result_message += "\n<b>Общая информация и статистика:</b>\n"
+
+              excluded_keywords = ['блогер', 'статистика', 'стоимость', 'налог', 'контакты менеджера']
               for column, value in row.items():
                 # Проверяем, что значение не является NaN и не соответствует столбцу 'тематика' или 'статистика'
-                # if not pd.isna(value) and column != 'тематика' and column != 'блогер' and column != 'статистика' and column != 'стоимость':
-                if not pd.isna(
-                    value
-                ) and column != 'тематика' and column != 'блогер' and column != 'статистика' and column != 'стоимость' and column != 'налог' and 'контакты менеджера' not in column:
+                if not pd.isna(value) and not all(keyword in column for keyword in excluded_keywords):
+
+                # if not pd.isna(value) and column not in ['тематика', 'блогер', 'статистика', 'стоимость', 'налог'] and 'контакты менеджера' not in column:
                   # Если значение - число, форматируем его с использованием пробела вместо запятой
                   if isinstance(value, (int, float)):
                     formatted_value = '{:,.0f}'.format(value).replace(',', ' ')
@@ -698,7 +697,7 @@ def find_blogger_by_href_with_href(message):
               manager_contacts = manager_contacts.values[1]
             else:
               manager_contacts = manager_contacts.values[0]
-            result_message += "<b>☎ Контакты менеджера</b>: {}\n".format(
+            result_message += "<b>📞 Контакты менеджера</b>: {}\n".format(
                 manager_contacts)
 
           bot.send_message(
