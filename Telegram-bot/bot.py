@@ -562,7 +562,7 @@ def find_blogger_by_href(message):
 
   bot.send_message(
       message.chat.id,
-      "{0.first_name}, отправьте мне ссылку на блогера.\n\nНе рекомендуем искать Youtube-блогеров, так как у данной площадки может быть несколько ссылок на одного и того же блогера.\n\nЧтобы вернуться в главное меню, нажмите кнопку ниже.".format(message.from_user), reply_markup=markup)
+      "{0.first_name}, отправьте мне ссылку на блогера.\n\n<i>Не рекомендуем искать Youtube-блогеров, так как у данной площадки может быть несколько ссылок на одного и того же блогера.</i>\n\nЧтобы вернуться в главное меню, нажмите кнопку ниже.".format(message.from_user), reply_markup=markup, parse_mode='HTML')
 
   bot.register_next_step_handler(message, find_blogger_by_href_with_href)
 
@@ -573,9 +573,6 @@ def find_blogger_by_href_with_href(message):
   else:
       # Получаем введенную ссылку на блогера от пользователя
       blogger_href = message.text.lower()
-
-      # Отладочное сообщение для проверки ввода пользователя
-      print("Полученный blogger_href:", blogger_href)
 
       # Ищем blogger_href во всех столбцах, содержащих слово "ссылка"
       keyword = 'ссылка'
@@ -637,7 +634,7 @@ def find_blogger_by_href_with_href(message):
               excluded_keywords = ['блогер', 'статистика', 'стоимость', 'налог', 'контакты менеджера']
               for column, value in row.items():
                 # Проверяем, что значение не является NaN и не соответствует столбцу 'тематика' или 'статистика'
-                if not pd.isna(value) and not all(keyword in column for keyword in excluded_keywords):
+                if not pd.isna(value) and not any(keyword in column for keyword in excluded_keywords):
 
                 # if not pd.isna(value) and column not in ['тематика', 'блогер', 'статистика', 'стоимость', 'налог'] and 'контакты менеджера' not in column:
                   # Если значение - число, форматируем его с использованием пробела вместо запятой
