@@ -580,8 +580,6 @@ def find_blogger_by_href_with_href(message):
 
       filtered_df_href_sample = df[df[columns_with_link].apply(lambda col: col.astype(str).str.contains(blogger_href, case=False, na=False)).any(axis=1)]
 
-      filtered_df_href_sample.to_csv('filtered_df_href_sample.csv', index=False)
-
       filtered_df_href = df[df.apply(lambda col: col.astype(str).str.contains(blogger_href, case=False, na=False)).any(axis=1)]
 
       social_network = ['Telegram', 'Instagram', 'VK группа', 'VK личная страница', 'VK Видео', 'YouTube', 'RuTube', 'Дзен', 'Дзен Шоу', 'Одноклассники', 'OK Шоу', 'Twitch', 'TikTok', 'Threads', 'Likee', 'Yappy', 'Подкаст']
@@ -604,11 +602,6 @@ def find_blogger_by_href_with_href(message):
         filtered_df_href = filtered_df_href.rename(columns=lambda x: x.replace(f'{network} ', ''))
 
       filtered_df_href.columns = [col.lower() for col in filtered_df_href.columns]
-      
-      filtered_df_href.to_csv('filtered_data.csv', index=False)
-
-
-
     
       if not filtered_df_href_sample.empty:
           markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -633,7 +626,9 @@ def find_blogger_by_href_with_href(message):
             # Проверяем, что текущая строка не пуста
             if not row.isnull().all():              
               # Добавляем информацию о блогере в начале каждой строки
-              result_message += "<b>Имя блогера</b>: {}\n".format(str(row['блогер']).title())
+              # result_message += "<b>Имя блогера</b>: {}\n".format(str(row['блогер']).title())
+              result_message += "\n\n<b>Имя блогера</b>: {}\n".format(str(row['блогер']).strip().title())
+
               # result_message += "<b>Имя блогера</b>: {}\n".format(
               #   row['блогер'])
               # Перебираем столбцы и их значения в текущей строке
@@ -680,13 +675,13 @@ def find_blogger_by_href_with_href(message):
               #     result_message += "\n<b>Статистика:</b> не найдена"
 
 
-              max_message_length = 4000  # Максимальная длина сообщения в Telegram
-              result_message += "\n\n"
-              for i in range(0, len(result_message), max_message_length):
-                bot.send_message(message.chat.id,
-                                 result_message[i:i + max_message_length],
-                                 parse_mode='HTML',
-                                 reply_markup=keyboard_data_social_network)
+          max_message_length = 4000  # Максимальная длина сообщения в Telegram
+          result_message += "\n\n"
+          for i in range(0, len(result_message), max_message_length):
+            bot.send_message(message.chat.id,
+                             result_message[i:i + max_message_length],
+                             parse_mode='HTML',
+                             reply_markup=keyboard_data_social_network)
 
           result_message = ""
           tax_value = filtered_df_href.get('налог')
