@@ -580,14 +580,18 @@ def find_blogger_by_href_with_href(message):
 
       filtered_df_href_sample = df[df[columns_with_link].apply(lambda col: col.astype(str).str.contains(blogger_href, case=False, na=False)).any(axis=1)]
 
+      filtered_df_href_sample.to_csv('filtered_df_href_sample.csv', index=False)
+
       filtered_df_href = df[df.apply(lambda col: col.astype(str).str.contains(blogger_href, case=False, na=False)).any(axis=1)]
 
       social_network = ['Telegram', 'Instagram', 'VK группа', 'VK личная страница', 'VK Видео', 'YouTube', 'RuTube', 'Дзен', 'Дзен Шоу', 'Одноклассники', 'OK Шоу', 'Twitch', 'TikTok', 'Threads', 'Likee', 'Yappy', 'Подкаст']
   
       found_networks = []  # Создаем список для найденных социальных сетей
-
+      column_with_blogger_href = next((col for col in filtered_df_href.columns if blogger_href in filtered_df_href[col].astype(str).str.lower().values), None)
+      print(f"Blogger_href found in column: {column_with_blogger_href}")
+    
       for network in social_network:
-        if network.lower() in blogger_href:
+        if network in column_with_blogger_href:
             found_networks.append(network)
 
       relevant_columns = [col for col in filtered_df_href.columns if any(network in col for network in found_networks) or col.strip().lower() == 'блогер' or col.strip().lower() == 'налог' or col.strip().lower() == 'контакты менеджера']
@@ -600,6 +604,9 @@ def find_blogger_by_href_with_href(message):
         filtered_df_href = filtered_df_href.rename(columns=lambda x: x.replace(f'{network} ', ''))
 
       filtered_df_href.columns = [col.lower() for col in filtered_df_href.columns]
+      
+      filtered_df_href.to_csv('filtered_data.csv', index=False)
+
 
 
     
@@ -619,6 +626,7 @@ def find_blogger_by_href_with_href(message):
           # keyboard_data_social_network.add(item1)
           keyboard_data_social_network.add(item2)
 
+        
           result_message = ""  # Инициализируем result_message
 
           for index, row in filtered_df_href.iterrows():
