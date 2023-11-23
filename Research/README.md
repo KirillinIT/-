@@ -3,3 +3,4 @@
 СМИ о данном исследовании:
 * https://www.sostav.ru/publication/gonorary-blogerov-64481.html
 * http://www.advertology.ru/article156163.htm
+* https://admarket.news/platforma-vk-video-dlya-rossiyskih-reklamodateley-stala-privlekatelnee-youtube/
