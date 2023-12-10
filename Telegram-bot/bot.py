@@ -4,16 +4,173 @@ from telebot import types
 from string import Template
 from background import keep_alive  #импорт функции для поддержки работоспособности
 
-#basic
+from functools import partial
+
 import pandas as pd
+import numpy as np
 import re
 
+#analitics
+import threading
+import sqlite3
+from datetime import datetime
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+import schedule
+import time
 
-df = pd.read_csv('bufer.csv')
 
 token = 'TOKEN'  # Токен бота  # Замените на свой токен
-
 bot = telebot.TeleBot(token)
+
+db_lock = threading.Lock()
+
+
+# Инициализация базы данных
+conn = sqlite3.connect('telegram_bot_data.db')
+cursor = conn.cursor()
+
+#Создание таблицы для хранения данных о пользователях
+cursor.execute('''CREATE TABLE IF NOT EXISTS users (
+                  user_id INTEGER PRIMARY KEY,
+                  username TEXT,
+                  first_name TEXT,
+                  last_name TEXT,
+                  join_date TEXT
+                  )''')
+
+# Создание таблицы для хранения данных об активности пользователей
+cursor.execute('''CREATE TABLE IF NOT EXISTS user_activity (
+                  user_id INTEGER,
+                  activity_date TEXT,
+                  activity_count INTEGER
+                  )''')
+conn.commit()
+
+# Обработчик для записи информации о новых пользователях
+@bot.message_handler(func=lambda message: message.new_chat_members is not None)
+def record_new_users(message):
+    for user in message.new_chat_members:
+        user_id = user.id
+        username = user.username
+        first_name = user.first_name
+        last_name = user.last_name
+        join_date = message.date
+        cursor.execute('''INSERT INTO users
+                          (user_id, username, first_name, last_name, join_date)
+                          VALUES (?, ?, ?, ?, ?)''',
+                       (user_id, username, first_name, last_name, join_date))
+        conn.commit()
+
+# Обработчик для подсчета активности пользователей
+def count_user_activity(message):
+    user_id = message.from_user.id
+    activity_date = pd.to_datetime('today').date()
+    
+    # Создайте новый курсор для этой операции
+    cursor = conn.cursor()
+    
+    cursor.execute('''INSERT INTO user_activity
+                      (user_id, activity_date, activity_count)
+                      VALUES (?, ?, 1)
+                      ON CONFLICT(user_id, activity_date)
+                      DO UPDATE SET activity_count = activity_count + 1''',
+                   (user_id, activity_date))
+    conn.commit()
+
+
+# Функция для генерации отчета о ежедневной активности пользователей
+def generate_daily_activity_report(conn):
+  today = pd.to_datetime('today').date()
+
+  # Используйте новое соединение для каждой операции
+  cursor = conn.cursor()
+  cursor.execute('''SELECT activity_date, SUM(activity_count) 
+                    FROM user_activity 
+                    WHERE activity_date >= ? 
+                    GROUP BY activity_date''',
+   (str(today - pd.DateOffset(days=7)),))
+  data = cursor.fetchall()
+
+  df = pd.DataFrame(data, columns=['Date', 'Activity'])
+  return df
+
+# Функция для построения графика активности пользователей
+def plot_activity_report(df):
+    plt.figure(figsize=(10, 6))
+    plt.plot(df['Date'], df['Activity'], marker='o')
+    plt.xlabel('Дата')
+    plt.ylabel('Количество действий')
+    plt.title('Активность пользователей за последние 7 дней')
+    plt.grid(True)
+    plt.ylim(bottom=0)  # Устанавливаем минимальное значение для оси y
+    plt.savefig('activity_report.png')
+
+# Обработчик команды для запроса отчета
+@bot.message_handler(commands=['activity_report'])
+def send_activity_report(message):
+  # Используйте новое соединение для каждого запроса
+  with sqlite3.connect('telegram_bot_data.db', check_same_thread=False) as conn:
+      df = generate_daily_activity_report(conn)
+
+  plot_activity_report(df)
+  bot.send_message(message.chat.id, "Вот отчет об активности пользователей за последние 7 дней:")
+  with open('activity_report.png', 'rb') as photo:
+      bot.send_photo(message.chat.id, photo)
+
+# Функция для анализа популярных слов в сообщениях пользователей
+def generate_word_cloud():
+    cursor = conn.cursor()
+    cursor.execute('''SELECT username, message_text 
+                      FROM user_messages 
+                      JOIN users ON user_messages.user_id = users.user_id''')
+    data = cursor.fetchall()
+    text = ' '.join([row[1] for row in data])
+
+    wordcloud = WordCloud(width=800, height=400).generate(text)
+    plt.figure(figsize=(10, 6))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    plt.savefig('word_cloud.png')
+
+# Обработчик команды для генерации облака слов
+@bot.message_handler(commands=['word_cloud'])
+def send_word_cloud(message):
+    generate_word_cloud()
+    bot.send_message(message.chat.id, "Here is the word cloud of popular words used by users:")
+    with open('word_cloud.png', 'rb') as photo:
+        bot.send_photo(message.chat.id, photo)
+
+# Функция для отправки ежедневного отчета по расписанию
+def send_daily_report():
+    df = generate_daily_activity_report()
+    pdf_filename = generate_pdf_report(df)
+
+    # Определите пользователя или чат, куда вы хотите отправить отчет
+    user_id_or_chat_id = 'HREF'
+
+    bot.send_message(user_id_or_chat_id, "Here is the daily user activity report for the past 7 days:")
+    with open(pdf_filename, 'rb') as pdf_file:
+        bot.send_document(user_id_or_chat_id, pdf_file)
+
+# Запуск задачи для отправки отчета ежедневно в определенное время (например, в 10:00)
+schedule.every().day.at('10:00').do(send_daily_report)
+
+# Функция для запуска планировщика
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+# Обработчик команды для запуска планировщика
+@bot.message_handler(commands=['start_scheduler'])
+def start_scheduler(message):
+    bot.send_message(message.chat.id, "Scheduler started. Daily reports will be sent at 10:00 AM.")
+    run_scheduler()
+
+
+
+df = pd.read_csv('itog2.csv')
 
 
 # Команда /start
